@@ -1,7 +1,14 @@
 <script lang="ts">
 	import SiteHeader from '$lib/components/SiteHeader.svelte'
 	import { formatGeneratedAt, formatPostDate } from '$lib/format'
-	import { getNextTheme, getSavedTheme, saveTheme, type Theme } from '$lib/theme'
+	import {
+		getSavedThemeMode,
+		resolveThemeMode,
+		saveThemeMode,
+		watchSystemTheme,
+		type ResolvedTheme,
+		type ThemeMode,
+	} from '$lib/theme'
 	import { onMount } from 'svelte'
 	import type { PageData } from './$types'
 
@@ -10,7 +17,8 @@
 
 	let { data }: { data: PageData } = $props()
 
-	let theme = $state<Theme>('light')
+	let themeMode = $state<ThemeMode>('auto')
+	let resolvedTheme = $state<ResolvedTheme>('light')
 	let searchTerm = $state('')
 	let showAbout = $state(false)
 	let memberSample = $state<PageData['alumni']>([])
@@ -49,11 +57,18 @@
 	)
 	let hiddenMemberCount = $derived(Math.max(0, avatarMembers.length - featuredMembers.length))
 	let alumniByName = $derived(new Map(data.alumni.map((person) => [person.nickname, person])))
-	let visibleSources = $derived((data.blogSources ?? []).slice(0, 10))
+	let visibleSources = $derived((data.blogSources ?? []).slice(0, 50))
 
 	onMount(() => {
-		theme = getSavedTheme() ?? theme
+		themeMode = getSavedThemeMode()
+		resolvedTheme = resolveThemeMode(themeMode)
 		memberSample = shuffleMembers(avatarMembers).slice(0, SIDEBAR_MEMBER_LIMIT)
+
+		return watchSystemTheme((systemTheme) => {
+			if (themeMode === 'auto') {
+				resolvedTheme = systemTheme
+			}
+		})
 	})
 
 	function shuffleMembers(members: PageData['alumni']) {
@@ -71,9 +86,10 @@
 		memberOrder = shuffleMembers(data.alumni)
 	}
 
-	function toggleTheme() {
-		theme = getNextTheme(theme)
-		saveTheme(theme)
+	function setThemeMode(mode: ThemeMode) {
+		themeMode = mode
+		resolvedTheme = resolveThemeMode(mode)
+		saveThemeMode(mode)
 	}
 
 	function closeAboutOnEscape(event: KeyboardEvent) {
@@ -107,17 +123,18 @@
 <svelte:window onkeydown={closeAboutOnEscape} />
 
 <div
-	class:dark={theme === 'dark'}
+	class:dark={resolvedTheme === 'dark'}
 	class="min-h-screen bg-[#f3f5f7] text-[#202124] selection:bg-[#7dd3fc]/30 dark:bg-[#111418] dark:text-[#e8eaed]"
 >
 	<SiteHeader
 		brandAriaLabel="回到文章列表"
 		brandHref="#feed"
 		onAbout={() => (showAbout = true)}
-		onToggleTheme={toggleTheme}
+		onThemeModeChange={setThemeMode}
+		{resolvedTheme}
 		showArticlesLink
 		subtitle="开发者社区"
-		{theme}
+		{themeMode}
 	/>
 
 	<main class="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_340px]">

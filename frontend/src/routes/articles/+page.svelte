@@ -1,21 +1,37 @@
 <script lang="ts">
 	import SiteHeader from '$lib/components/SiteHeader.svelte'
 	import { formatGeneratedAt, formatPostDate } from '$lib/format'
-	import { getNextTheme, getSavedTheme, saveTheme, type Theme } from '$lib/theme'
+	import {
+		getSavedThemeMode,
+		resolveThemeMode,
+		saveThemeMode,
+		watchSystemTheme,
+		type ResolvedTheme,
+		type ThemeMode,
+	} from '$lib/theme'
 	import { onMount } from 'svelte'
 	import type { PageData } from './$types'
 
 	let { data }: { data: PageData } = $props()
-	let theme = $state<Theme>('light')
+	let themeMode = $state<ThemeMode>('auto')
+	let resolvedTheme = $state<ResolvedTheme>('light')
 	let alumniByName = $derived(new Map(data.alumni.map((person) => [person.nickname, person])))
 
 	onMount(() => {
-		theme = getSavedTheme() ?? theme
+		themeMode = getSavedThemeMode()
+		resolvedTheme = resolveThemeMode(themeMode)
+
+		return watchSystemTheme((systemTheme) => {
+			if (themeMode === 'auto') {
+				resolvedTheme = systemTheme
+			}
+		})
 	})
 
-	function toggleTheme() {
-		theme = getNextTheme(theme)
-		saveTheme(theme)
+	function setThemeMode(mode: ThemeMode) {
+		themeMode = mode
+		resolvedTheme = resolveThemeMode(mode)
+		saveThemeMode(mode)
 	}
 
 	function getPostAvatar(sourceName: string): string | null {
@@ -28,14 +44,15 @@
 </svelte:head>
 
 <div
-	class:dark={theme === 'dark'}
+	class:dark={resolvedTheme === 'dark'}
 	class="min-h-screen bg-[#f3f5f7] text-[#202124] selection:bg-[#7dd3fc]/30 dark:bg-[#111418] dark:text-[#e8eaed]"
 >
 	<SiteHeader
-		onToggleTheme={toggleTheme}
+		onThemeModeChange={setThemeMode}
+		{resolvedTheme}
 		showHomeLink
 		subtitle="文章列表"
-		{theme}
+		{themeMode}
 	/>
 
 	<main class="mx-auto max-w-5xl px-4 py-5 sm:px-6">
