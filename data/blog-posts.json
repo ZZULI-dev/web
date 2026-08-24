@@ -5248,18 +5248,6 @@
       "rank": 9
     },
     {
-      "id": "6bd27b81f070",
-      "title": "Sitemap",
-      "url": "https://note.hoey.tk/sitemap.xml",
-      "sourceName": "hoey",
-      "sourceSiteName": "Hoey",
-      "sourceUrl": "https://note.hoey.tk/",
-      "publishedAt": null,
-      "fetchedAt": "2026-08-23T20:26:35.819Z",
-      "discoveredBy": "html",
-      "rank": 9
-    },
-    {
       "id": "8bc049727d78",
       "title": "安装与入门",
       "url": "https://tech.chivas-regal.top/blogs/computer-tools/docker/0-begin.html",

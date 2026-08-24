@@ -53,6 +53,7 @@ const NAV_TITLES = new Set([
 ])
 
 const PATH_BLOCKLIST = [
+	/\/sitemaps?(?:\.xml)?\/?$/i,
 	/\/(?:about|archives?|categories?|tags?|friends?|links?|login|admin|search)(?:\/|$)/i,
 	/\/article\/list\/\d+/i,
 	/\/category_\d+\.html$/i,
@@ -527,7 +528,7 @@ async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
 
 		if (!isSameSite(url, baseUrl)) continue
 
-		const title = refineTitle(cleanText(attrs.get('title') ?? '') || cleanText(match[2]))
+		const title = cleanText(attrs.get('title') ?? '') || cleanText(match[2])
 		if (!isPlausibleTitle(title)) continue
 
 		const score = scoreHtmlCandidate(url, title, match[0])
@@ -756,7 +757,7 @@ function extractPageTitle(html, source) {
 	const h1 = html.match(/<h1\b[^>]*>([\s\S]*?)<\/h1>/i)?.[1]
 	const title = html.match(/<title\b[^>]*>([\s\S]*?)<\/title>/i)?.[1]
 
-	const cleanTitle = stripSiteSuffix(cleanText(metaTitle || h1 || title || ''))
+	const cleanTitle = cleanText(metaTitle || h1 || title || '')
 
 	if (!cleanTitle || cleanTitle === source.siteName || cleanTitle === source.name) {
 		return ''
@@ -776,24 +777,6 @@ function readMetaContent(html, attrName, attrValue) {
 	return ''
 }
 
-function stripSiteSuffix(value) {
-	return value
-		.replace(/[_-].{0,60}CSDN博客$/u, '')
-		.replace(/\s+[-_|·]\s*[^-_|·]{1,40}$/u, '')
-		.replace(/\s+/g, ' ')
-		.trim()
-}
-
-function refineTitle(value) {
-	return value
-		.replace(/\s+原创\s+博文更新于[\s\S]*$/u, '')
-		.replace(/\s+原创\s+[\s\S]*阅读[\s\S]*$/u, '')
-		.replace(/^(.{6,36})\s+\1[\s\S]*$/u, '$1')
-		.replace(/\s+在不开启[\s\S]*$/u, '')
-		.replace(/\s+的系统版本为[\s\S]*$/u, '')
-		.replace(/\s+/g, ' ')
-		.trim()
-}
 
 function isUsefulSitemapTitle(title, fallbackTitle, source) {
 	if (!isPlausibleTitle(title)) return false
