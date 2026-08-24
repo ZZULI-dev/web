@@ -779,8 +779,7 @@ function readMetaContent(html, attrName, attrValue) {
 function stripSiteSuffix(value) {
 	return value
 		.replace(/[_-].{0,60}CSDN博客$/u, '')
-		.replace(/\s*[-_|·]\s*[^-_|·]{1,40}$/u, '')
-		.replace(/\s+[-|·]\s+[^-|·]{1,40}$/u, '')
+		.replace(/\s+[-_|·]\s*[^-_|·]{1,40}$/u, '')
 		.replace(/\s+/g, ' ')
 		.trim()
 }
