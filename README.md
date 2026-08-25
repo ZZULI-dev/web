@@ -59,7 +59,7 @@ https://zzuli.dev
 | Frex             | [FrexCheat](https://github.com/FrexCheat)               |                                                |
 | Charles          | [Charles-IX](https://github.com/Charles-IX)             |                                                |
 | RaXianch         | [DeSireFire](https://github.com/DeSireFire)             |                                                |
-| Sleepwf          | [Games55k](https://github.com/Games55k)                 |                                                |
+| Sleepwf          | [Games55k](https://github.com/Games55k)                 | [Hi, this is Sleepwf](https://blog.sleepwf.dev/)|
 | vow              | [vow0328](https://github.com/vow0328)                   | [vow0328](https://vow0328.github.io/)          |
 | Dang Wenliang    | [fookwood](https://github.com/fookwood)                 | [闷瓜蛋子](https://fookwood.com/)              |
 | GlassSky01       | [GlassSky01](https://github.com/GlassSky01)             |                                                |
@@ -95,10 +95,10 @@ https://zzuli.dev
 | Huan Huang       | [ViewsHuang](https://github.com/ViewsHuang)             |                                                |
 | shuaibinchen     | [ctf102](https://github.com/ctf102)                     |                                                |
 | Z Y              | [iyangzh](https://github.com/iyangzh)                   | [孤梭の个人博客](https://iyangzh.github.io/)   |
-| Ms\_XiaoTian     | [MsXiaoT](https://github.com/MsXiaoT)                   |                                                |
+| Ms\_XiaoTian     | [MsXiaoT](https://github.com/MsXiaoT)                   | [萌神小天](https://www.msxiaotian.top/)        |
 | lj200612         | [lj200612](https://github.com/lj200612)                 | [JiePress](https://www.jiepress.cn/)           |
 | H.Y              | [mshzy](https://github.com/mshzy)                       |                                                |
-| MoQix26          | [MoQix26](https://github.com/MoQix26)                   |                                                |
+| MoQix26          | [MoQix26](https://github.com/MoQix26)                   | [MoQix26's Blog](https://moqix26.top/)         |
 | LingLuoMuYun     | [LingLuoMuYun](https://github.com/LingLuoMuYun)         | [泠落の小屋](https://muyunliqiu.vercel.app/)   |
 
 ---

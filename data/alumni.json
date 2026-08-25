@@ -53,7 +53,11 @@
   },
   {
     "nickname": "Sleepwf",
-    "github": "Games55k"
+    "github": "Games55k",
+    "blog": {
+      "name": "Hi, this is Sleepwf",
+      "url": "https://blog.sleepwf.dev/"
+    }
   },
   {
     "nickname": "vow",
@@ -253,7 +257,11 @@
   },
   {
     "nickname": "Ms_XiaoTian",
-    "github": "MsXiaoT"
+    "github": "MsXiaoT",
+    "blog": {
+      "name": "萌神小天",
+      "url": "https://www.msxiaotian.top/"
+    }
   },
   {
     "nickname": "lj200612",
@@ -269,7 +277,11 @@
   },
   {
     "nickname": "MoQix26",
-    "github": "MoQix26"
+    "github": "MoQix26",
+    "blog": {
+      "name": "MoQix26's Blog",
+      "url": "https://moqix26.top/"
+    }
   },
   {
     "nickname": "LingLuoMuYun",
