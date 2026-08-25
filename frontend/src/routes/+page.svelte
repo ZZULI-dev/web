@@ -22,7 +22,7 @@ import {
 } from '$lib/theme'
 import type { PageData } from './$types'
 
-const HOME_POST_LIMIT = 18
+const HOME_POST_LIMIT = 20
 const HOME_PROJECT_LIMIT = 5
 const HOME_ACTIVITY_STORAGE_KEY = 'zzuli-home-activity-period'
 const SIDEBAR_MEMBER_COLUMNS = 7
