@@ -4,6 +4,11 @@ const SYSTEM_DARK_QUERY = '(prefers-color-scheme: dark)'
 export type ResolvedTheme = 'light' | 'dark'
 export type ThemeMode = ResolvedTheme | 'auto'
 
+const THEME_COLORS: Record<ResolvedTheme, string> = {
+	dark: '#15191f',
+	light: '#fdfdfd',
+}
+
 export function getSavedThemeMode(): ThemeMode {
 	if (typeof localStorage === 'undefined') return 'auto'
 
@@ -23,6 +28,18 @@ export function resolveThemeMode(mode: ThemeMode): ResolvedTheme {
 
 export function saveThemeMode(mode: ThemeMode) {
 	localStorage.setItem(THEME_STORAGE_KEY, mode)
+}
+
+export function syncBrowserThemeColor(theme: ResolvedTheme) {
+	if (typeof document === 'undefined') return
+
+	for (const meta of document.querySelectorAll<HTMLMetaElement>(
+		'meta[name="theme-color"]',
+	)) {
+		meta.content = THEME_COLORS[theme]
+	}
+
+	document.documentElement.style.colorScheme = theme
 }
 
 export function watchSystemTheme(onChange: (theme: ResolvedTheme) => void) {

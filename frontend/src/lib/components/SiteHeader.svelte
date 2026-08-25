@@ -2,7 +2,7 @@
 import { onDestroy } from 'svelte'
 import GlobalSearch from '$lib/components/GlobalSearch.svelte'
 import type { SearchItem } from '$lib/search'
-import type { ResolvedTheme, ThemeMode } from '$lib/theme'
+import { syncBrowserThemeColor, type ResolvedTheme, type ThemeMode } from '$lib/theme'
 
 type Props = {
 	brandAriaLabel?: string
@@ -39,6 +39,10 @@ let showThemeTooltip = $state(false)
 let themeTooltipTimer: ReturnType<typeof setTimeout> | null = null
 let nextThemeMode = $derived(getNextThemeMode(themeMode))
 let themeToggleLabel = $derived(themeLabels[nextThemeMode])
+
+$effect(() => {
+	syncBrowserThemeColor(resolvedTheme)
+})
 
 onDestroy(clearThemeTooltipTimer)
 
