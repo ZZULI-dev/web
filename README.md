@@ -100,6 +100,7 @@ https://zzuli.dev
 | H.Y              | [mshzy](https://github.com/mshzy)                       |                                                |
 | MoQix26          | [MoQix26](https://github.com/MoQix26)                   | [MoQix26's Blog](https://moqix26.top/)         |
 | LingLuoMuYun     | [LingLuoMuYun](https://github.com/LingLuoMuYun)         | [泠落の小屋](https://muyunliqiu.vercel.app/)   |
+| ljcjclljc        | [ljcjclljc](https://github.com/ljcjclljc)               | [晨's Blog](https://waiting.org.cn/)           |
 
 ---
 
