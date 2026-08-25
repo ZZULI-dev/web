@@ -40,11 +40,24 @@ export const load: PageServerLoad = ({ params }) => {
 	const projects = siteData.projects.filter(
 		(project) => project.author.github?.toLowerCase() === person.id,
 	)
+	const memberActivity =
+		siteData.githubActivity.members.find(
+			(member) => member.github.toLowerCase() === person.id,
+		) ?? null
+	const activity = memberActivity
+		? {
+				...memberActivity,
+				generatedAt: siteData.githubActivity.generatedAt,
+				range: siteData.githubActivity.range,
+			}
+		: null
 
 	return {
 		person,
 		posts,
 		projects,
+		activity,
 		blogPostsGeneratedAt: siteData.blogPostsGeneratedAt,
+		searchIndex: siteData.searchIndex,
 	}
 }

@@ -1,9 +1,11 @@
-# Cache GitHub avatars for 1 week
-https://github.com/*.png
-  Cache-Control: public, max-age=604800, s-maxage=604800
+# Cache immutable SvelteKit assets for 1 year
+/_app/immutable/*
+  Cache-Control: public, max-age=31536000, immutable
 
 # Cache images for 1 year
 /images/*
+  Cache-Control: public, max-age=31536000, immutable
+/*.webp
   Cache-Control: public, max-age=31536000, immutable
 
 # Cache fonts for 1 year

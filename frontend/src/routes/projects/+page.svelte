@@ -1,6 +1,7 @@
 <script lang="ts">
 import { onMount } from 'svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
+import { SITE_ORIGIN } from '$lib/site'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -68,6 +69,7 @@ function formatProjectDate(value: string | null): string {
 
 <svelte:head>
 	<title>项目列表 | ZZULI.dev</title>
+	<link rel="canonical" href={`${SITE_ORIGIN}/projects`} />
 </svelte:head>
 
 <div
@@ -77,12 +79,14 @@ function formatProjectDate(value: string | null): string {
 	<SiteHeader
 		onThemeModeChange={setThemeMode}
 		{resolvedTheme}
+		searchItems={data.searchIndex}
 		showArticlesLink
+		showProjectsLink
 		subtitle="开发者社区"
 		{themeMode}
 	/>
 
-	<main class="mx-auto max-w-5xl px-4 py-5 sm:px-6">
+	<main class="mx-auto max-w-4xl px-4 py-5 sm:px-6">
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 			<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 				<div class="flex items-center gap-2">

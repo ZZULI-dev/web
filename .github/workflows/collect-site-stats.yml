@@ -1,0 +1,45 @@
+name: Collect site stats
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '45 20 * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Collect site stats
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ZONE_TAG: ${{ secrets.CLOUDFLARE_ZONE_TAG }}
+          SITE_STATS_HOSTNAME: zzuli.dev
+        run: npm --prefix frontend run collect:site-stats
+
+      - name: Validate data
+        run: npm --prefix frontend run validate:data
+
+      - name: Commit updated data
+        run: |
+          if git diff --quiet -- data/site-stats.json; then
+            echo "No site stats changes."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/site-stats.json
+          git commit -m "chore: update site stats"
+          git push

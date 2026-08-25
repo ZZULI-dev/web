@@ -1,0 +1,53 @@
+# 部署说明
+
+ZZULI.dev 是静态站点，推荐部署到 Cloudflare Pages。
+
+## 域名
+
+- 主域名：`https://zzuli.dev`
+- Pages 项目里添加自定义域名 `zzuli.dev`
+- 旧域名 `zzuli.dogxi.me` 使用 Cloudflare Redirect Rule 做 301 跳转
+
+Redirect Rule 建议：
+
+- When incoming requests match: `(http.host eq "zzuli.dogxi.me")`
+- Type: Dynamic
+- Expression: `concat("https://zzuli.dev", http.request.uri.path)`
+- Status code: `301`
+- Preserve query string: 开启
+
+不要把整站旧域名跳转写进 Pages `_redirects`。`_redirects` 更适合路径规则；同一个 Pages 项目同时绑定新旧域名时，用主机名匹配的 Redirect Rule 更清晰，也能避免跳转环。
+
+## 数据采集
+
+站点构建时只读取 `data/*.json`，前端不会在用户访问时请求 GitHub 或 Cloudflare API。
+
+- `collect-blog-posts.yml`：采集博客文章
+- `collect-github-activity.yml`：采集成员 GitHub 贡献日历，使用 `GITHUB_TOKEN`
+- `collect-site-stats.yml`：采集站点访问统计，需要仓库 Secrets：
+  - `CLOUDFLARE_API_TOKEN`
+  - `CLOUDFLARE_ZONE_TAG`
+
+Cloudflare 访问统计接入：
+
+1. 在 Cloudflare Dashboard 打开 `My Profile` -> `API Tokens` -> `Create Token` -> `Custom token`。
+2. 权限选择 `Account` -> `Account Analytics` -> `Read`，Zone Resources 限制到 `zzuli.dev` 所在 zone。
+3. 在 `zzuli.dev` zone 概览页复制 `Zone ID`，写入 GitHub Secrets：`CLOUDFLARE_ZONE_TAG`。
+4. 把 API Token 写入 GitHub Secrets：`CLOUDFLARE_API_TOKEN`。
+5. 手动运行 `Collect site stats` workflow。成功后会更新 `data/site-stats.json`，首页会显示“站点访问”卡片。
+
+本地测试：
+
+```bash
+CLOUDFLARE_API_TOKEN=xxx \
+CLOUDFLARE_ZONE_TAG=xxx \
+SITE_STATS_HOSTNAME=zzuli.dev \
+npm --prefix frontend run collect:site-stats
+```
+
+站点统计默认读取最近 30 天 Cloudflare zone 日统计：
+
+- `totalPageViews`：由 `dailyPageViews` 按日期累计，重复运行同一天只会覆盖当天数值，不会重复累加。
+- `uniqueVisitors`：近 30 天按天独立访客汇总，会标记为近似值，不作为“总访客”。
+
+Cloudflare 的日统计节点不支持按 hostname 或 `requestSource` 过滤；`SITE_STATS_DAYS<=7` 时脚本会额外用 `httpRequestsAdaptiveGroups` 按 `SITE_STATS_HOSTNAME` 查询请求和访次。

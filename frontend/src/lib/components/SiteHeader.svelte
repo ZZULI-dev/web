@@ -1,4 +1,6 @@
 <script lang="ts">
+import GlobalSearch from '$lib/components/GlobalSearch.svelte'
+import type { SearchItem } from '$lib/search'
 import type { ResolvedTheme, ThemeMode } from '$lib/theme'
 
 type Props = {
@@ -8,37 +10,47 @@ type Props = {
 	resolvedTheme: ResolvedTheme
 	showArticlesLink?: boolean
 	showProjectsLink?: boolean
+	searchItems?: SearchItem[]
 	subtitle: string
 	themeMode: ThemeMode
 }
 
-const themeOptions: Array<{ label: string; mode: ThemeMode }> = [
-	{ label: 'Light', mode: 'light' },
-	{ label: 'Dark', mode: 'dark' },
-	{ label: 'Auto', mode: 'auto' },
-]
+const themeLabels: Record<ThemeMode, string> = {
+	auto: 'Auto',
+	dark: 'Night',
+	light: 'Light',
+}
 
 let {
 	brandAriaLabel = '返回首页',
 	brandHref = '/',
 	onThemeModeChange,
 	resolvedTheme,
+	searchItems = [],
 	showArticlesLink = false,
 	showProjectsLink = false,
 	subtitle,
 	themeMode,
 }: Props = $props()
 
-let themeMenuOpen = $state(false)
+let showThemeTooltip = $state(false)
+let nextThemeMode = $derived(getNextThemeMode(themeMode))
+let themeToggleLabel = $derived(themeLabels[nextThemeMode])
 
-function chooseThemeMode(mode: ThemeMode) {
-	onThemeModeChange(mode)
-	themeMenuOpen = false
+function toggleThemeMode() {
+	showThemeTooltip = false
+	onThemeModeChange(nextThemeMode)
+}
+
+function getNextThemeMode(mode: ThemeMode): ThemeMode {
+	if (mode === 'light') return 'dark'
+	if (mode === 'dark') return 'auto'
+	return 'light'
 }
 </script>
 
 <header class="sticky top-0 z-30 bg-[#fdfdfd]/90 shadow-[0_1px_0_rgba(31,35,40,0.08)] backdrop-blur dark:bg-[#15191f]/88 dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-	<div class="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-4 sm:px-6">
+	<div class="mx-auto flex h-14 max-w-[1056px] items-center justify-between gap-3 px-4 sm:px-6">
 		<a
 			href={brandHref}
 			class="flex min-w-0 items-center gap-3"
@@ -56,6 +68,9 @@ function chooseThemeMode(mode: ThemeMode) {
 		</a>
 
 		<div class="flex items-center gap-2">
+			{#if searchItems.length > 0}
+				<GlobalSearch items={searchItems} />
+			{/if}
 			{#if showArticlesLink}
 				<a
 					href="/articles"
@@ -75,11 +90,13 @@ function chooseThemeMode(mode: ThemeMode) {
 			<div class="relative">
 				<button
 					type="button"
-					onclick={() => (themeMenuOpen = !themeMenuOpen)}
+					onclick={toggleThemeMode}
+					onblur={() => (showThemeTooltip = false)}
+					onfocus={() => (showThemeTooltip = true)}
+					onmouseenter={() => (showThemeTooltip = true)}
+					onmouseleave={() => (showThemeTooltip = false)}
 					class="flex h-9 w-9 items-center justify-center rounded-full text-[#4b5563] hover:bg-[#eef2f7] dark:text-[#b6beca] dark:hover:bg-[#202631]"
-					aria-label="选择主题"
-					aria-haspopup="menu"
-					aria-expanded={themeMenuOpen}
+					aria-label={`切换到 ${themeToggleLabel}`}
 				>
 					{#if resolvedTheme === 'dark'}
 						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -93,26 +110,9 @@ function chooseThemeMode(mode: ThemeMode) {
 					{/if}
 				</button>
 
-				{#if themeMenuOpen}
-					<div
-						role="menu"
-						class="absolute right-0 top-10 z-50 w-28 overflow-hidden rounded-xl bg-white py-1 shadow-[0_8px_26px_rgba(31,35,40,0.16)] ring-1 ring-[#d8dee4] dark:bg-[#1c2128] dark:shadow-[0_12px_30px_rgba(0,0,0,0.4)] dark:ring-[#30363d]"
-					>
-						{#each themeOptions as option}
-							<button
-								type="button"
-								role="menuitem"
-								onclick={() => chooseThemeMode(option.mode)}
-								class="flex w-full items-center justify-between gap-3 px-3 py-2 text-left text-xs font-medium text-[#4b5563] hover:bg-[#f8fafc] dark:text-[#b6beca] dark:hover:bg-[#202631]"
-							>
-								<span>{option.label}</span>
-								{#if themeMode === option.mode}
-									<span class="h-1.5 w-1.5 rounded-full bg-[#0969da] dark:bg-[#7cc4ff]" aria-hidden="true"></span>
-								{/if}
-							</button>
-						{/each}
-					</div>
-				{/if}
+				<span class="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-lg bg-[#24292f] px-2 py-1 text-xs font-medium text-white shadow-lg transition-opacity {showThemeTooltip ? 'opacity-100' : 'opacity-0'} dark:bg-[#e8eaed] dark:text-[#111418]">
+					{themeToggleLabel}
+				</span>
 			</div>
 		</div>
 	</div>

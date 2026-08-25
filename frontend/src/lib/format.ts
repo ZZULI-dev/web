@@ -34,3 +34,10 @@ export function formatGeneratedAt(value: string | null): string {
 		minute: '2-digit',
 	}).format(date)
 }
+
+export function formatMetric(value: number): string {
+	return new Intl.NumberFormat('zh-CN', {
+		notation: value >= 10000 ? 'compact' : 'standard',
+		maximumFractionDigits: 1,
+	}).format(value)
+}

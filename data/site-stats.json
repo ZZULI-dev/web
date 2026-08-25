@@ -1,0 +1,22 @@
+{
+	"generatedAt": "2026-08-25T10:24:03.826Z",
+	"range": {
+		"from": "2026-07-27",
+		"to": "2026-08-25",
+		"days": 30
+	},
+	"hostname": "zzuli.dev",
+	"requests": 79,
+	"pageViews": 16,
+	"visits": null,
+	"uniqueVisitors": 27,
+	"uniqueVisitorsApproximate": true,
+	"totalPageViews": 16,
+	"totalPageViewsStartedAt": "2026-08-25",
+	"totalPageViewsUpdatedThrough": "2026-08-25",
+	"dailyPageViews": {
+		"2026-08-25": 16
+	},
+	"source": "cloudflare-graphql:httpRequests1dGroups",
+	"available": true
+}

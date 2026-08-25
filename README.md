@@ -6,7 +6,7 @@
 
 ## 快速开始
 
-https://zzuli.dogxi.me
+https://zzuli.dev
 
 ## 目录
 
@@ -103,11 +103,15 @@ https://zzuli.dogxi.me
 npm --prefix frontend run validate:data
 npm --prefix frontend run generate:readme
 npm --prefix frontend run collect:posts # 只在新增/修改博客时需要
+npm --prefix frontend run collect:github-activity # 需要 GITHUB_TOKEN
+npm --prefix frontend run collect:site-stats # 需要 Cloudflare 统计权限
 ```
 
 ## 相关信息
 
 - 如果你正在校学习，欢迎通过 Issue 或 PR 提交自己以及自己的项目！
+
+- 部署、统计采集和旧域名跳转见 [docs/deployment.md](./docs/deployment.md)。
 
 - 如果收集了您的信息，但是不希望出现在本项目，可以通过私发邮箱 hi@dogxi.me 联系删除，非常抱歉！
 

@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
-import { formatGeneratedAt, formatPostDate } from '$lib/format'
+import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
+import { SITE_ORIGIN } from '$lib/site'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -45,10 +46,17 @@ function formatProjectDate(value: string | null): string {
 		? `${month}.${day}`
 		: `${year}.${month}.${day}`
 }
+
+function contributionTitle(
+	day: NonNullable<PageData['activity']>['calendar'][number],
+): string {
+	return `${day.date}: ${day.count} 次贡献`
+}
 </script>
 
 <svelte:head>
 	<title>{data.person.nickname} | ZZULI.dev</title>
+	<link rel="canonical" href={`${SITE_ORIGIN}${data.person.profilePath}`} />
 </svelte:head>
 
 <div
@@ -58,13 +66,14 @@ function formatProjectDate(value: string | null): string {
 	<SiteHeader
 		onThemeModeChange={setThemeMode}
 		{resolvedTheme}
+		searchItems={data.searchIndex}
 		showArticlesLink
 		showProjectsLink
 		subtitle="开发者社区"
 		{themeMode}
 	/>
 
-	<main class="mx-auto max-w-5xl space-y-5 px-4 py-5 sm:px-6">
+	<main class="mx-auto max-w-4xl space-y-5 px-4 py-5 sm:px-6">
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 			<div class="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center">
 				<img
@@ -103,6 +112,84 @@ function formatProjectDate(value: string | null): string {
 				</div>
 			</div>
 		</section>
+
+		{#if data.activity}
+			<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+				<div class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+					<h2 class="text-sm font-semibold">GitHub 贡献</h2>
+					<span class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">
+						{formatGeneratedAt(data.activity.generatedAt)}
+					</span>
+				</div>
+
+				<div class="px-4 py-4">
+					<div class="grid grid-cols-3 gap-4 text-sm">
+						<div>
+							<p class="text-lg font-semibold">{formatMetric(data.activity.todayContributions)}</p>
+							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">今日</p>
+						</div>
+						<div>
+							<p class="text-lg font-semibold">{formatMetric(data.activity.recentContributions)}</p>
+							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">近 {data.activity.range.recentDays} 天</p>
+						</div>
+						<div>
+							<p class="text-lg font-semibold">{formatMetric(data.activity.totalContributions)}</p>
+							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">近一年</p>
+						</div>
+					</div>
+
+					{#if data.activity.calendar.length > 0}
+						<div
+							class="mt-4 overflow-x-auto pb-1"
+							aria-label={`${data.person.nickname} 的 GitHub 贡献日历`}
+						>
+							<div
+								class="grid grid-flow-col gap-1"
+								style="grid-template-rows: repeat(7, minmax(0, 1fr));"
+							>
+								{#each data.activity.calendar as day}
+									<span
+										class="h-2.5 w-2.5 rounded-[2px] bg-[#ebedf0] dark:bg-[#202631]"
+										style={`background-color: ${day.color};`}
+										title={contributionTitle(day)}
+										aria-label={contributionTitle(day)}
+									></span>
+								{/each}
+							</div>
+						</div>
+					{/if}
+
+					{#if data.activity.recentRepositories.length > 0}
+						<div class="mt-4 grid gap-2 sm:grid-cols-2">
+							{#each data.activity.recentRepositories as repo}
+								<a
+									href={repo.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									class="min-w-0 rounded-xl bg-[#f8fafc] px-3 py-2 hover:bg-[#eef2f7] dark:bg-[#1b2129] dark:hover:bg-[#202631]"
+								>
+									<p class="truncate text-sm font-medium text-[#1d4ed8] dark:text-[#80bfff]">
+										{repo.nameWithOwner}
+									</p>
+									<div class="mt-1 flex items-center gap-2 text-xs text-[#6b7280] dark:text-[#9aa4b2]">
+										{#if repo.language}
+											<span class="inline-flex min-w-0 items-center gap-1.5">
+												<span
+													class="h-2.5 w-2.5 rounded-full"
+													style={`background-color: ${repo.language.color};`}
+												></span>
+												<span class="truncate">{repo.language.name}</span>
+											</span>
+										{/if}
+										<span>★ {formatMetric(repo.stars)}</span>
+									</div>
+								</a>
+							{/each}
+						</div>
+					{/if}
+				</div>
+			</section>
+		{/if}
 
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 			<div class="flex items-center justify-between gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">

@@ -1,5 +1,6 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import type { SearchItem } from '$lib/search'
 
 export type Project = {
 	name: string
@@ -55,6 +56,67 @@ export type BlogSource = {
 	error?: string
 }
 
+export type GitHubActivityDay = {
+	date: string
+	count: number
+	color: string
+}
+
+export type GitHubActivityRepository = {
+	name: string
+	nameWithOwner: string
+	url: string
+	pushedAt: string | null
+	stars: number
+	language: {
+		name: string
+		color: string
+	} | null
+}
+
+export type GitHubActivityMember = {
+	github: string
+	name: string | null
+	url: string
+	avatar: string
+	todayContributions: number
+	recentContributions: number
+	totalContributions: number
+	calendar: GitHubActivityDay[]
+	recentRepositories: GitHubActivityRepository[]
+}
+
+export type GitHubActivityData = {
+	generatedAt: string | null
+	range: {
+		from: string | null
+		to: string | null
+		recentDays: number
+	}
+	members: GitHubActivityMember[]
+}
+
+export type SiteStats = {
+	generatedAt: string | null
+	range: {
+		from: string | null
+		to: string | null
+		days: number
+	}
+	hostname: string | null
+	requests: number | null
+	pageViews: number | null
+	visits: number | null
+	uniqueVisitors: number | null
+	uniqueVisitorsApproximate: boolean
+	totalPageViews: number | null
+	totalPageViewsStartedAt: string | null
+	totalPageViewsUpdatedThrough: string | null
+	dailyPageViews: Record<string, number>
+	source: string | null
+	available: boolean
+}
+
 type BlogPostsFile = {
 	crawl?: {
 		minPostDate?: string | null
@@ -65,11 +127,26 @@ type BlogPostsFile = {
 	sources?: BlogSource[]
 }
 
+type GitHubActivityFile = Partial<GitHubActivityData>
+type SiteStatsFile = Partial<SiteStats>
+type RawGitHubActivityCalendar =
+	| GitHubActivityDay[]
+	| {
+			start?: string | null
+			counts?: number[]
+			colors?: string[]
+	  }
+type RawGitHubActivityMember = Omit<GitHubActivityMember, 'calendar'> & {
+	calendar?: RawGitHubActivityCalendar
+}
+
 type LoadSiteDataOptions = {
 	postLimit?: number
 }
 
 const DEFAULT_BLOG_CRAWL_YEARS = 2
+const DEFAULT_GITHUB_ACTIVITY_DAYS = 7
+const DEFAULT_SITE_STATS_DAYS = 30
 
 type AlumniRecord = {
 	nickname?: string
@@ -334,11 +411,291 @@ function formatCrawlWindowLabel(crawl: BlogPostsFile['crawl']): string {
 	return `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`
 }
 
+function emptyGitHubActivity(): GitHubActivityData {
+	return {
+		generatedAt: null,
+		range: {
+			from: null,
+			to: null,
+			recentDays: DEFAULT_GITHUB_ACTIVITY_DAYS,
+		},
+		members: [],
+	}
+}
+
+function addDaysToDateKey(dateKey: string, days: number) {
+	const date = new Date(`${dateKey}T00:00:00Z`)
+	if (Number.isNaN(date.getTime())) return null
+
+	date.setUTCDate(date.getUTCDate() + days)
+	return date.toISOString().slice(0, 10)
+}
+
+function getContributionColor(count: number) {
+	if (count <= 0) return '#ebedf0'
+	if (count < 3) return '#9be9a8'
+	if (count < 6) return '#40c463'
+	if (count < 10) return '#30a14e'
+	return '#216e39'
+}
+
+function normalizeGitHubActivityCalendar(
+	calendar: RawGitHubActivityCalendar | undefined,
+): GitHubActivityDay[] {
+	if (Array.isArray(calendar)) {
+		return calendar
+			.map((day) => ({
+				date: day.date,
+				count: day.count,
+				color: day.color,
+			}))
+			.filter((day) => day.date)
+	}
+
+	if (!calendar?.start || !Array.isArray(calendar.counts)) {
+		return []
+	}
+
+	return calendar.counts
+		.map((count, index) => {
+			const date = addDaysToDateKey(calendar.start as string, index)
+			return date
+				? {
+						date,
+						count,
+						color: calendar.colors?.[index] ?? getContributionColor(count),
+					}
+				: null
+		})
+		.filter((day): day is GitHubActivityDay => day !== null)
+}
+
+function normalizeGitHubActivityMember(
+	member: RawGitHubActivityMember,
+): GitHubActivityMember {
+	return {
+		...member,
+		calendar: normalizeGitHubActivityCalendar(member.calendar),
+	}
+}
+
+function readGitHubActivity(): GitHubActivityData {
+	const activityPath = findRepoFile('data/github-activity.json')
+	if (!activityPath) {
+		return emptyGitHubActivity()
+	}
+
+	try {
+		const parsed = JSON.parse(
+			fs.readFileSync(activityPath, 'utf-8'),
+		) as GitHubActivityFile
+		return {
+			generatedAt: parsed.generatedAt ?? null,
+			range: {
+				from: parsed.range?.from ?? null,
+				to: parsed.range?.to ?? null,
+				recentDays:
+					typeof parsed.range?.recentDays === 'number'
+						? parsed.range.recentDays
+						: DEFAULT_GITHUB_ACTIVITY_DAYS,
+			},
+			members: Array.isArray(parsed.members)
+				? (parsed.members as RawGitHubActivityMember[]).map(
+						normalizeGitHubActivityMember,
+					)
+				: [],
+		}
+	} catch (error) {
+		console.error('Error reading data/github-activity.json:', error)
+		return emptyGitHubActivity()
+	}
+}
+
+function emptySiteStats(): SiteStats {
+	return {
+		generatedAt: null,
+		range: {
+			from: null,
+			to: null,
+			days: DEFAULT_SITE_STATS_DAYS,
+		},
+		hostname: 'zzuli.dev',
+		requests: null,
+		pageViews: null,
+		visits: null,
+		uniqueVisitors: null,
+		uniqueVisitorsApproximate: false,
+		totalPageViews: null,
+		totalPageViewsStartedAt: null,
+		totalPageViewsUpdatedThrough: null,
+		dailyPageViews: {},
+		source: null,
+		available: false,
+	}
+}
+
+function readSiteStats(): SiteStats {
+	const statsPath = findRepoFile('data/site-stats.json')
+	if (!statsPath) {
+		return emptySiteStats()
+	}
+
+	try {
+		const parsed = JSON.parse(
+			fs.readFileSync(statsPath, 'utf-8'),
+		) as SiteStatsFile
+		return {
+			generatedAt: parsed.generatedAt ?? null,
+			range: {
+				from: parsed.range?.from ?? null,
+				to: parsed.range?.to ?? null,
+				days:
+					typeof parsed.range?.days === 'number'
+						? parsed.range.days
+						: DEFAULT_SITE_STATS_DAYS,
+			},
+			hostname: parsed.hostname ?? 'zzuli.dev',
+			requests: parsed.requests ?? null,
+			pageViews: parsed.pageViews ?? null,
+			visits: parsed.visits ?? null,
+			uniqueVisitors: parsed.uniqueVisitors ?? null,
+			uniqueVisitorsApproximate:
+				parsed.uniqueVisitorsApproximate ?? false,
+			totalPageViews: parsed.totalPageViews ?? parsed.pageViews ?? null,
+			totalPageViewsStartedAt: parsed.totalPageViewsStartedAt ?? null,
+			totalPageViewsUpdatedThrough:
+				parsed.totalPageViewsUpdatedThrough ?? parsed.range?.to ?? null,
+			dailyPageViews:
+				parsed.dailyPageViews &&
+				typeof parsed.dailyPageViews === 'object' &&
+				!Array.isArray(parsed.dailyPageViews)
+					? parsed.dailyPageViews
+					: {},
+			source: parsed.source ?? null,
+			available: parsed.available ?? false,
+		}
+	} catch (error) {
+		console.error('Error reading data/site-stats.json:', error)
+		return emptySiteStats()
+	}
+}
+
+function buildSearchIndex({
+	alumni,
+	blogPosts,
+	blogSources,
+	projects,
+}: {
+	alumni: Alumni[]
+	blogPosts: BlogPost[]
+	blogSources: BlogSource[]
+	projects: Project[]
+}): SearchItem[] {
+	const items: SearchItem[] = []
+	const seen = new Set<string>()
+	const addItem = (item: SearchItem) => {
+		const key = `${item.type}:${item.href}`
+		if (seen.has(key)) return
+
+		seen.add(key)
+		items.push(item)
+	}
+
+	for (const person of alumni) {
+		addItem({
+			type: 'member',
+			title: person.nickname,
+			subtitle: `@${person.github.username}`,
+			href: person.profilePath,
+			external: false,
+			keywords: [
+				person.nickname,
+				person.github.username,
+				person.github.url,
+				person.blog?.name,
+				person.blog?.url,
+			]
+				.filter(Boolean)
+				.join(' '),
+		})
+	}
+
+	for (const project of projects) {
+		addItem({
+			type: 'project',
+			title: project.name,
+			subtitle: project.author.github
+				? `@${project.author.github}`
+				: project.author.name,
+			href: project.url,
+			external: true,
+			keywords: [
+				project.name,
+				project.description,
+				project.author.name,
+				project.author.github,
+				project.url,
+				...project.languages.map((language) => language.name),
+			]
+				.filter(Boolean)
+				.join(' '),
+		})
+	}
+
+	for (const post of blogPosts) {
+		addItem({
+			type: 'article',
+			title: post.title,
+			subtitle: post.sourceName,
+			href: post.url,
+			external: true,
+			keywords: [
+				post.title,
+				post.sourceName,
+				post.sourceSiteName,
+				post.sourceUrl,
+				post.publishedAt,
+			]
+				.filter(Boolean)
+				.join(' '),
+		})
+	}
+
+	for (const source of blogSources) {
+		addItem({
+			type: 'source',
+			title: source.siteName ?? source.name,
+			subtitle: source.name,
+			href: source.url,
+			external: true,
+			keywords: [
+				source.name,
+				source.siteName,
+				source.url,
+				source.status,
+				source.strategy,
+			]
+				.filter(Boolean)
+				.join(' '),
+		})
+	}
+
+	return items
+}
+
 export function loadSiteData(options: LoadSiteDataOptions = {}) {
 	try {
 		const projects = readProjects()
 		const alumni = readAlumni()
 		const blogPosts = readBlogPosts()
+		const githubActivity = readGitHubActivity()
+		const siteStats = readSiteStats()
+		const searchIndex = buildSearchIndex({
+			alumni,
+			blogPosts: blogPosts.posts,
+			blogSources: blogPosts.sources,
+			projects,
+		})
 		const posts =
 			typeof options.postLimit === 'number'
 				? blogPosts.posts.slice(0, options.postLimit)
@@ -352,6 +709,9 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 			blogCrawlWindowLabel: blogPosts.crawlWindowLabel,
 			blogPostsGeneratedAt: blogPosts.generatedAt,
 			blogSources: blogPosts.sources,
+			githubActivity,
+			searchIndex,
+			siteStats,
 		}
 	} catch (error) {
 		console.error('Error reading site data:', error)
@@ -363,6 +723,9 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 			blogCrawlWindowLabel: `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`,
 			blogPostsGeneratedAt: null,
 			blogSources: [],
+			githubActivity: emptyGitHubActivity(),
+			searchIndex: [],
+			siteStats: emptySiteStats(),
 		}
 	}
 }

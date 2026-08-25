@@ -50,6 +50,69 @@ function isDate(value) {
 	return /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(new Date(`${value}T00:00:00Z`).getTime());
 }
 
+function isDateTime(value) {
+	return isNonEmptyString(value) && !Number.isNaN(new Date(value).getTime());
+}
+
+function isNonNegativeNumber(value) {
+	return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function validateNullableDate(value, pathLabel) {
+	if (value !== null && value !== undefined && !isDate(value)) {
+		addError(pathLabel, `必须是 YYYY-MM-DD 或 null: ${value}`);
+	}
+}
+
+function validateNullableDateTime(value, pathLabel) {
+	if (value !== null && value !== undefined && !isDateTime(value)) {
+		addError(pathLabel, `必须是有效日期时间或 null: ${value}`);
+	}
+}
+
+function validateNullableCount(value, pathLabel) {
+	if (value !== null && value !== undefined && !isNonNegativeNumber(value)) {
+		addError(pathLabel, `必须是非负数字或 null: ${value}`);
+	}
+}
+
+function validateGitHubCalendar(calendar, pathLabel) {
+	if (Array.isArray(calendar)) {
+		calendar.forEach((day, dayIndex) => {
+			const dayPath = `${pathLabel}[${dayIndex}]`;
+			if (!isDate(day.date)) {
+				addError(dayPath, `date 必须是 YYYY-MM-DD: ${day.date ?? ''}`);
+			}
+			validateNullableCount(day.count, `${dayPath}.count`);
+			if (!isNonEmptyString(day.color)) {
+				addError(dayPath, 'color 不能为空');
+			}
+		});
+		return;
+	}
+
+	if (!calendar || typeof calendar !== 'object') {
+		addError(pathLabel, '必须是数组或紧凑对象');
+		return;
+	}
+
+	if (!isDate(calendar.start)) {
+		addError(`${pathLabel}.start`, `必须是 YYYY-MM-DD: ${calendar.start ?? ''}`);
+	}
+	if (!Array.isArray(calendar.counts)) {
+		addError(`${pathLabel}.counts`, '必须是数组');
+		return;
+	}
+
+	calendar.counts.forEach((count, index) => {
+		validateNullableCount(count, `${pathLabel}.counts[${index}]`);
+	});
+
+	if (calendar.colors !== undefined && !Array.isArray(calendar.colors)) {
+		addError(`${pathLabel}.colors`, '必须是数组');
+	}
+}
+
 function checkUnique(key, value, seen, pathLabel) {
 	if (!value) {
 		return;
@@ -183,10 +246,126 @@ function validateBlogPosts() {
 	return data.posts.length;
 }
 
+function validateGitHubActivity() {
+	const filePath = path.join(ROOT_DIR, 'data/github-activity.json');
+	if (!fs.existsSync(filePath)) {
+		return 0;
+	}
+
+	const data = readJson('data/github-activity.json');
+	validateNullableDateTime(data.generatedAt, 'data/github-activity.json.generatedAt');
+	validateNullableDate(data.range?.from, 'data/github-activity.json.range.from');
+	validateNullableDate(data.range?.to, 'data/github-activity.json.range.to');
+	if (!isNonNegativeNumber(data.range?.recentDays) || data.range.recentDays < 1) {
+		addError('data/github-activity.json.range.recentDays', '必须是正数');
+	}
+	if (!Array.isArray(data.members)) {
+		addError('data/github-activity.json.members', '必须是数组');
+		return 0;
+	}
+
+	const githubs = new Set();
+	data.members.forEach((member, index) => {
+		const pathLabel = `data/github-activity.json.members[${index}]`;
+		if (!isGitHubUsername(member.github)) {
+			addError(pathLabel, `github 格式不正确: ${member.github ?? ''}`);
+		}
+		checkUnique('github', normalizeGitHubUsername(member.github), githubs, pathLabel);
+		if (!isNonEmptyString(member.url) || !isHttpUrl(member.url)) {
+			addError(pathLabel, `url 必须是 http(s) URL: ${member.url ?? ''}`);
+		}
+		if (!isNonEmptyString(member.avatar) || !isHttpUrl(member.avatar)) {
+			addError(pathLabel, `avatar 必须是 http(s) URL: ${member.avatar ?? ''}`);
+		}
+		validateNullableCount(member.todayContributions, `${pathLabel}.todayContributions`);
+		validateNullableCount(member.recentContributions, `${pathLabel}.recentContributions`);
+		validateNullableCount(member.totalContributions, `${pathLabel}.totalContributions`);
+		validateGitHubCalendar(member.calendar, `${pathLabel}.calendar`);
+		if (!Array.isArray(member.recentRepositories)) {
+			addError(`${pathLabel}.recentRepositories`, '必须是数组');
+		} else {
+			member.recentRepositories.forEach((repo, repoIndex) => {
+				const repoPath = `${pathLabel}.recentRepositories[${repoIndex}]`;
+				if (!isNonEmptyString(repo.name)) {
+					addError(repoPath, 'name 不能为空');
+				}
+				if (!isNonEmptyString(repo.nameWithOwner)) {
+					addError(repoPath, 'nameWithOwner 不能为空');
+				}
+				if (!isNonEmptyString(repo.url) || !isHttpUrl(repo.url)) {
+					addError(repoPath, `url 必须是 http(s) URL: ${repo.url ?? ''}`);
+				}
+				validateNullableDateTime(repo.pushedAt, `${repoPath}.pushedAt`);
+				validateNullableCount(repo.stars, `${repoPath}.stars`);
+				if (repo.language !== null && repo.language !== undefined) {
+					if (!isNonEmptyString(repo.language.name)) {
+						addError(repoPath, 'language.name 不能为空');
+					}
+					if (!isNonEmptyString(repo.language.color)) {
+						addError(repoPath, 'language.color 不能为空');
+					}
+				}
+			});
+		}
+	});
+
+	return data.members.length;
+}
+
+function validateSiteStats() {
+	const filePath = path.join(ROOT_DIR, 'data/site-stats.json');
+	if (!fs.existsSync(filePath)) {
+		return 0;
+	}
+
+	const data = readJson('data/site-stats.json');
+	validateNullableDateTime(data.generatedAt, 'data/site-stats.json.generatedAt');
+	validateNullableDate(data.range?.from, 'data/site-stats.json.range.from');
+	validateNullableDate(data.range?.to, 'data/site-stats.json.range.to');
+	if (!isNonNegativeNumber(data.range?.days) || data.range.days < 1) {
+		addError('data/site-stats.json.range.days', '必须是正数');
+	}
+	if (data.hostname !== null && data.hostname !== undefined && !isNonEmptyString(data.hostname)) {
+		addError('data/site-stats.json.hostname', '必须是非空字符串或 null');
+	}
+	validateNullableCount(data.requests, 'data/site-stats.json.requests');
+	validateNullableCount(data.pageViews, 'data/site-stats.json.pageViews');
+	validateNullableCount(data.visits, 'data/site-stats.json.visits');
+	validateNullableCount(data.uniqueVisitors, 'data/site-stats.json.uniqueVisitors');
+	validateNullableCount(data.totalPageViews, 'data/site-stats.json.totalPageViews');
+	validateNullableDate(data.totalPageViewsStartedAt, 'data/site-stats.json.totalPageViewsStartedAt');
+	validateNullableDate(data.totalPageViewsUpdatedThrough, 'data/site-stats.json.totalPageViewsUpdatedThrough');
+	if (data.dailyPageViews !== undefined) {
+		if (!data.dailyPageViews || typeof data.dailyPageViews !== 'object' || Array.isArray(data.dailyPageViews)) {
+			addError('data/site-stats.json.dailyPageViews', '必须是对象');
+		} else {
+			Object.entries(data.dailyPageViews).forEach(([date, count]) => {
+				if (!isDate(date)) {
+					addError('data/site-stats.json.dailyPageViews', `日期键必须是 YYYY-MM-DD: ${date}`);
+				}
+				validateNullableCount(count, `data/site-stats.json.dailyPageViews.${date}`);
+			});
+		}
+	}
+	if (typeof data.uniqueVisitorsApproximate !== 'boolean') {
+		addError('data/site-stats.json.uniqueVisitorsApproximate', '必须是 boolean');
+	}
+	if (data.source !== null && data.source !== undefined && !isNonEmptyString(data.source)) {
+		addError('data/site-stats.json.source', '必须是非空字符串或 null');
+	}
+	if (typeof data.available !== 'boolean') {
+		addError('data/site-stats.json.available', '必须是 boolean');
+	}
+
+	return data.available ? 1 : 0;
+}
+
 const counts = {
 	alumni: validateAlumni(),
 	projects: validateProjects(),
-	blogPosts: validateBlogPosts()
+	blogPosts: validateBlogPosts(),
+	githubActivityMembers: validateGitHubActivity(),
+	siteStats: validateSiteStats()
 };
 
 if (errors.length > 0) {
@@ -194,4 +373,4 @@ if (errors.length > 0) {
 	process.exit(1);
 }
 
-console.log(`数据校验通过: ${counts.alumni} 位成员, ${counts.projects} 个项目, ${counts.blogPosts} 篇文章`);
+console.log(`数据校验通过: ${counts.alumni} 位成员, ${counts.projects} 个项目, ${counts.blogPosts} 篇文章, ${counts.githubActivityMembers} 位 GitHub 活跃成员, ${counts.siteStats} 份站点统计`);
