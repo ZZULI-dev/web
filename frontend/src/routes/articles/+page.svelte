@@ -22,9 +22,14 @@ let showAbout = $state(false)
 let loadMoreTrigger: HTMLDivElement
 let expandedAuthors = $state(new Set<string>())
 
-const alumniByName = $derived(
-  new Map(data.alumni.map((person) => [person.nickname, person])),
-)
+// Use a stable Map to avoid re-computation issues
+const alumniByName = $derived.by(() => {
+  const map = new Map<string, (typeof data.alumni)[0]>()
+  for (const person of data.alumni) {
+    map.set(person.nickname, person)
+  }
+  return map
+})
 
 const filteredPosts = $derived.by(() => {
   if (!searchTerm.trim()) {
@@ -247,13 +252,13 @@ const INITIAL_AUTHOR_POSTS = 5
 										<img
 											src={getPostAvatar(post.sourceName)}
 											alt={post.sourceName}
-											class="mt-0.5 h-10 w-10 shrink-0 rounded-xl bg-[#eef2f7] object-cover dark:bg-[#202631]"
+											class="h-10 w-10 shrink-0 rounded-xl bg-[#eef2f7] object-cover dark:bg-[#202631]"
 											loading="lazy"
 											decoding="async"
 											referrerpolicy="no-referrer"
 										/>
 									{:else}
-										<div class="mt-0.5 flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef6ff] text-sm font-semibold text-[#0969da] dark:bg-[#10233a] dark:text-[#7cc4ff]">
+										<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#eef6ff] text-sm font-semibold text-[#0969da] dark:bg-[#10233a] dark:text-[#7cc4ff]">
 											文
 										</div>
 									{/if}
