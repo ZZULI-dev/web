@@ -75,7 +75,7 @@ https://zzuli.dev
 | MengHao Dai      | [DMengHao](https://github.com/DMengHao)                 |                                                |
 | Wang Wenchao     | [dooth333](https://github.com/dooth333)                 |                                                |
 | Zane Shen        | [zaneshenhq](https://github.com/zaneshenhq)             |                                                |
-| Echok            | [beinuela](https://github.com/beinuela)                 |                                                |
+| Chillist         | [chillist](https://github.com/chillist)                 |                                                |
 | Huang Enrong     | [kehuanenrong](https://github.com/kehuanenrong)         |                                                |
 | chenhao          | [halfup](https://github.com/halfup)                     |                                                |
 | Ma Chunhai       | [MACHUNHAI](https://github.com/MACHUNHAI)               |                                                |

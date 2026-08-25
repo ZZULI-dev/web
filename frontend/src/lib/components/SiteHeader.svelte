@@ -69,7 +69,7 @@ function getNextThemeMode(mode: ThemeMode): ThemeMode {
 
 		<div class="flex items-center gap-2">
 			{#if searchItems.length > 0}
-				<GlobalSearch items={searchItems} />
+				<GlobalSearch items={searchItems} dark={resolvedTheme === 'dark'} />
 			{/if}
 			{#if showArticlesLink}
 				<a

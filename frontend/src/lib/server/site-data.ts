@@ -19,6 +19,13 @@ export type Project = {
 	submittedAt: string | null
 }
 
+export type FriendLink = {
+	name: string
+	url: string
+	description: string
+	avatar: string | null
+}
+
 export type Alumni = {
 	id: string
 	nickname: string
@@ -169,6 +176,13 @@ type ProjectRecord = {
 		| string
 	languages?: string[]
 	submittedAt?: string
+}
+
+type FriendLinkRecord = {
+	name?: string
+	url?: string
+	description?: string
+	avatar?: string
 }
 
 const LANGUAGE_COLORS: Record<string, string> = {
@@ -357,6 +371,44 @@ function readProjects(): Project[] {
 			})
 	} catch (error) {
 		console.error('Error reading data/projects.json:', error)
+		return []
+	}
+}
+
+function toFriendLink(record: FriendLinkRecord): FriendLink | null {
+	const name = record.name?.trim()
+	const url = record.url?.trim()
+
+	if (!name || !url) {
+		return null
+	}
+
+	return {
+		name,
+		url,
+		description: record.description?.trim() ?? '',
+		avatar: record.avatar?.trim() || null,
+	}
+}
+
+function readFriendLinks(): FriendLink[] {
+	const linksPath = findRepoFile('data/friend-links.json')
+	if (!linksPath) {
+		return []
+	}
+
+	try {
+		const data = JSON.parse(fs.readFileSync(linksPath, 'utf-8'))
+		if (!Array.isArray(data)) {
+			console.error('Error reading data/friend-links.json: expected an array')
+			return []
+		}
+
+		return data
+			.map(toFriendLink)
+			.filter((link): link is FriendLink => link !== null)
+	} catch (error) {
+		console.error('Error reading data/friend-links.json:', error)
 		return []
 	}
 }
@@ -593,6 +645,7 @@ function buildSearchIndex({
 }): SearchItem[] {
 	const items: SearchItem[] = []
 	const seen = new Set<string>()
+	const alumniByName = new Map(alumni.map((person) => [person.nickname, person]))
 	const addItem = (item: SearchItem) => {
 		const key = `${item.type}:${item.href}`
 		if (seen.has(key)) return
@@ -608,6 +661,7 @@ function buildSearchIndex({
 			subtitle: `@${person.github.username}`,
 			href: person.profilePath,
 			external: false,
+			avatarUrl: person.avatar,
 			keywords: [
 				person.nickname,
 				person.github.username,
@@ -629,6 +683,7 @@ function buildSearchIndex({
 				: project.author.name,
 			href: project.url,
 			external: true,
+			avatarUrl: project.author.avatar,
 			keywords: [
 				project.name,
 				project.description,
@@ -649,6 +704,7 @@ function buildSearchIndex({
 			subtitle: post.sourceName,
 			href: post.url,
 			external: true,
+			avatarUrl: alumniByName.get(post.sourceName)?.avatar ?? null,
 			keywords: [
 				post.title,
 				post.sourceName,
@@ -668,6 +724,7 @@ function buildSearchIndex({
 			subtitle: source.name,
 			href: source.url,
 			external: true,
+			avatarUrl: alumniByName.get(source.name)?.avatar ?? null,
 			keywords: [
 				source.name,
 				source.siteName,
@@ -687,6 +744,7 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 	try {
 		const projects = readProjects()
 		const alumni = readAlumni()
+		const friendLinks = readFriendLinks()
 		const blogPosts = readBlogPosts()
 		const githubActivity = readGitHubActivity()
 		const siteStats = readSiteStats()
@@ -704,6 +762,7 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 		return {
 			projects,
 			alumni,
+			friendLinks,
 			blogPosts: posts,
 			blogPostCount: blogPosts.posts.length,
 			blogCrawlWindowLabel: blogPosts.crawlWindowLabel,
@@ -718,6 +777,7 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 		return {
 			projects: [],
 			alumni: [],
+			friendLinks: [],
 			blogPosts: [],
 			blogPostCount: 0,
 			blogCrawlWindowLabel: `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`,

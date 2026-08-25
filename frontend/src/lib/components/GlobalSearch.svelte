@@ -1,16 +1,32 @@
 <script lang="ts">
 import { onMount, tick } from 'svelte'
-import { SEARCH_TYPE_LABELS, type SearchItem } from '$lib/search'
+import {
+	SEARCH_TYPE_LABELS,
+	type SearchItem,
+	type SearchItemType,
+} from '$lib/search'
 
 type ScoredSearchItem = SearchItem & {
 	score: number
 }
 
 type Props = {
+	dark?: boolean
 	items: SearchItem[]
 }
 
-let { items }: Props = $props()
+const TYPE_BADGE_CLASSES: Record<SearchItemType, string> = {
+	article:
+		'bg-[#eef6ff] text-[#0969da] ring-[#bfdbfe] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:ring-[#1f4b78]',
+	member:
+		'bg-[#ecfdf5] text-[#047857] ring-[#a7f3d0] dark:bg-[#0f2f25] dark:text-[#6ee7b7] dark:ring-[#164e3c]',
+	project:
+		'bg-[#fff7ed] text-[#c2410c] ring-[#fed7aa] dark:bg-[#351d10] dark:text-[#fdba74] dark:ring-[#7c2d12]',
+	source:
+		'bg-[#f5f3ff] text-[#6d28d9] ring-[#ddd6fe] dark:bg-[#241a3a] dark:text-[#c4b5fd] dark:ring-[#4c1d95]',
+}
+
+let { dark = false, items }: Props = $props()
 
 let activeIndex = $state(0)
 let inputElement = $state<HTMLInputElement | null>(null)
@@ -45,6 +61,16 @@ onMount(() => {
 
 	return () => window.removeEventListener('keydown', onKeydown)
 })
+
+function portal(node: HTMLElement) {
+	document.body.appendChild(node)
+
+	return {
+		destroy() {
+			node.remove()
+		},
+	}
+}
 
 function closeSearch() {
 	open = false
@@ -131,6 +157,17 @@ function getScore(
 
 	return 4
 }
+
+function getAvatarFallback(item: SearchItem): string {
+	return (
+		item.title.trim().charAt(0) ||
+		SEARCH_TYPE_LABELS[item.type].charAt(0)
+	).toUpperCase()
+}
+
+function getTypeBadgeClass(type: SearchItemType): string {
+	return TYPE_BADGE_CLASSES[type]
+}
 </script>
 
 <button
@@ -147,6 +184,8 @@ function getScore(
 
 {#if open}
 	<div
+		use:portal
+		class:dark={dark}
 		class="fixed inset-0 z-50 px-4 pt-20"
 		role="none"
 	>
@@ -183,7 +222,7 @@ function getScore(
 					没有结果
 				</div>
 			{:else}
-				<div class="max-h-[60vh] overflow-y-auto py-1" role="listbox" aria-label="搜索结果">
+				<div class="search-results max-h-[60vh] overflow-y-auto py-1" role="listbox" aria-label="搜索结果">
 					{#each results as item, index}
 						<a
 							href={item.href}
@@ -193,16 +232,35 @@ function getScore(
 							aria-selected={index === activeIndex}
 							onclick={closeSearch}
 							onmouseenter={() => (activeIndex = index)}
-							class="grid grid-cols-[auto_minmax(0,1fr)] gap-x-3 px-4 py-2.5 text-sm {index === activeIndex
+							class="grid grid-cols-[2.25rem_minmax(0,1fr)] gap-x-3 px-4 py-2.5 text-sm {index === activeIndex
 								? 'bg-[#f3f5f7] dark:bg-[#202631]'
 								: 'hover:bg-[#f8fafc] dark:hover:bg-[#1b2129]'}"
 						>
-							<span class="mt-0.5 rounded-full bg-[#eef2f7] px-2 py-0.5 text-[10px] font-medium text-[#6b7280] dark:bg-[#202631] dark:text-[#9aa4b2]">
-								{SEARCH_TYPE_LABELS[item.type]}
+							<span class="flex h-9 w-9 items-center justify-center overflow-hidden rounded-xl bg-[#eef2f7] text-xs font-semibold text-[#6b7280] dark:bg-[#202631] dark:text-[#9aa4b2]">
+								{#if item.avatarUrl}
+									<img
+										src={item.avatarUrl}
+										alt=""
+										class="h-full w-full object-cover"
+										loading="lazy"
+										decoding="async"
+										referrerpolicy="no-referrer"
+									/>
+								{:else}
+									{getAvatarFallback(item)}
+								{/if}
 							</span>
 							<span class="min-w-0">
 								<span class="block truncate font-medium text-[#202124] dark:text-[#e8eaed]">{item.title}</span>
-								<span class="mt-0.5 block truncate text-xs text-[#6b7280] dark:text-[#9aa4b2]">{item.subtitle}</span>
+								<span class="mt-1 flex min-w-0 items-center gap-1.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">
+									<span class="inline-flex shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold ring-1 {getTypeBadgeClass(item.type)}">
+										{SEARCH_TYPE_LABELS[item.type]}
+									</span>
+									{#if item.subtitle}
+										<span aria-hidden="true">·</span>
+										<span class="truncate">{item.subtitle}</span>
+									{/if}
+								</span>
 							</span>
 						</a>
 					{/each}
@@ -211,3 +269,29 @@ function getScore(
 		</div>
 	</div>
 {/if}
+
+<style>
+	.search-results {
+		scrollbar-color: rgba(107, 114, 128, 0.34) transparent;
+		scrollbar-width: thin;
+	}
+
+	.search-results::-webkit-scrollbar {
+		width: 8px;
+	}
+
+	.search-results::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	.search-results::-webkit-scrollbar-thumb {
+		background-color: rgba(107, 114, 128, 0.26);
+		border: 2px solid transparent;
+		border-radius: 999px;
+		background-clip: content-box;
+	}
+
+	.search-results::-webkit-scrollbar-thumb:hover {
+		background-color: rgba(107, 114, 128, 0.42);
+	}
+</style>

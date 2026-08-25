@@ -6,6 +6,7 @@ export type SearchItem = {
 	subtitle: string
 	href: string
 	external: boolean
+	avatarUrl: string | null
 	keywords: string
 }
 

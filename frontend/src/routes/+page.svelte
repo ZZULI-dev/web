@@ -1,24 +1,24 @@
 <script lang="ts">
 import { onMount } from 'svelte'
 import {
-	ACTIVITY_PERIODS,
-	type ActivityPeriodKey,
-	getActivityMemberView,
-	getActivityPeriod,
-	getContributionCount,
-	getNextActivityPeriodKey,
-	isActivityPeriodKey,
+  ACTIVITY_PERIODS,
+  type ActivityPeriodKey,
+  getActivityMemberView,
+  getActivityPeriod,
+  getContributionCount,
+  getNextActivityPeriodKey,
+  isActivityPeriodKey,
 } from '$lib/activity'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
 import { REPOSITORY_URL, SITE_ORIGIN } from '$lib/site'
 import {
-	getSavedThemeMode,
-	type ResolvedTheme,
-	resolveThemeMode,
-	saveThemeMode,
-	type ThemeMode,
-	watchSystemTheme,
+  getSavedThemeMode,
+  type ResolvedTheme,
+  resolveThemeMode,
+  saveThemeMode,
+  type ThemeMode,
+  watchSystemTheme,
 } from '$lib/theme'
 import type { PageData } from './$types'
 
@@ -28,6 +28,13 @@ const HOME_ACTIVITY_STORAGE_KEY = 'zzuli-home-activity-period'
 const SIDEBAR_MEMBER_COLUMNS = 7
 const SIDEBAR_MEMBER_ROWS = 4
 const SIDEBAR_MEMBER_SLOTS = SIDEBAR_MEMBER_COLUMNS * SIDEBAR_MEMBER_ROWS
+const COPYRIGHT_YEAR = new Date().getFullYear()
+const SUBMIT_ALUMNI_URL =
+  'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-alumni.yml'
+const SUBMIT_PROJECT_URL =
+  'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml'
+const CONTACT_EMAIL = 'hi@dogxi.me'
+type SiteStatsIcon = 'views' | 'visitors'
 
 let { data }: { data: PageData } = $props()
 
@@ -43,179 +50,185 @@ let selectedHomeActivityPeriod = $state<ActivityPeriodKey>('7d')
 let totalAlumni = $derived(data.alumni.length)
 let totalProjects = $derived(data.projects.length)
 let totalBlogs = $derived(
-	data.alumni.filter((person) => person.blog?.url).length,
+  data.alumni.filter((person) => person.blog?.url).length,
 )
 let sourceHelpText = $derived(`爬取${data.blogCrawlWindowLabel}的文章`)
 let normalizedSearch = $derived(searchTerm.trim().toLowerCase())
 let orderedAlumni = $derived(memberOrder.length > 0 ? memberOrder : data.alumni)
 let filteredAlumni = $derived(
-	orderedAlumni.filter((person) => {
-		if (!normalizedSearch) return true
+  orderedAlumni.filter((person) => {
+    if (!normalizedSearch) return true
 
-		return [
-			person.nickname,
-			person.github.username,
-			person.github.url,
-			person.blog?.name,
-			person.blog?.url,
-		]
-			.filter(Boolean)
-			.some((value) => value?.toLowerCase().includes(normalizedSearch))
-	}),
+    return [
+      person.nickname,
+      person.github.username,
+      person.github.url,
+      person.blog?.name,
+      person.blog?.url,
+    ]
+      .filter(Boolean)
+      .some((value) => value?.toLowerCase().includes(normalizedSearch))
+  }),
 )
 let homePosts = $derived(data.blogPosts)
 let hasMorePosts = $derived(data.blogPostCount > HOME_POST_LIMIT)
 let featuredProjects = $derived(
-	projectSample.length > 0
-		? projectSample
-		: data.projects.slice(0, HOME_PROJECT_LIMIT),
+  projectSample.length > 0
+    ? projectSample
+    : data.projects.slice(0, HOME_PROJECT_LIMIT),
 )
 let avatarMembers = $derived(data.alumni.filter((person) => person.avatar))
 let sidebarMemberLimit = $derived(
-	avatarMembers.length > SIDEBAR_MEMBER_SLOTS
-		? SIDEBAR_MEMBER_SLOTS - 1
-		: SIDEBAR_MEMBER_SLOTS,
+  avatarMembers.length > SIDEBAR_MEMBER_SLOTS
+    ? SIDEBAR_MEMBER_SLOTS - 1
+    : SIDEBAR_MEMBER_SLOTS,
 )
 let featuredMembers = $derived(
-	memberSample.length > 0
-		? memberSample
-		: avatarMembers.slice(0, sidebarMemberLimit),
+  memberSample.length > 0
+    ? memberSample
+    : avatarMembers.slice(0, sidebarMemberLimit),
 )
 let hiddenMemberCount = $derived(
-	Math.max(0, avatarMembers.length - featuredMembers.length),
+  Math.max(0, avatarMembers.length - featuredMembers.length),
 )
 let alumniByName = $derived(
-	new Map(data.alumni.map((person) => [person.nickname, person])),
+  new Map(data.alumni.map((person) => [person.nickname, person])),
 )
 let alumniByGitHub = $derived(
-	new Map(data.alumni.map((person) => [person.id, person])),
+  new Map(data.alumni.map((person) => [person.id, person])),
 )
 let visibleSources = $derived((data.blogSources ?? []).slice(0, 50))
-let homeActivityPeriod = $derived(
-	getActivityPeriod(selectedHomeActivityPeriod),
-)
+let homeActivityPeriod = $derived(getActivityPeriod(selectedHomeActivityPeriod))
 let hasGitHubActivityData = $derived(data.githubActivity.members.length > 0)
 let activeMembers = $derived.by(() =>
-	data.githubActivity.members
-		.map((member) => ({
-			contributions: getContributionCount(member, homeActivityPeriod.days),
-			member,
-		}))
-		.filter((item) => item.contributions > 0)
-		.sort((a, b) => {
-			if (b.contributions !== a.contributions) {
-				return b.contributions - a.contributions
-			}
-			return b.member.totalContributions - a.member.totalContributions
-		})
-		.slice(0, 5),
+  data.githubActivity.members
+    .map((member) => ({
+      contributions: getContributionCount(member, homeActivityPeriod.days),
+      member,
+    }))
+    .filter((item) => item.contributions > 0)
+    .sort((a, b) => {
+      if (b.contributions !== a.contributions) {
+        return b.contributions - a.contributions
+      }
+      return b.member.totalContributions - a.member.totalContributions
+    })
+    .slice(0, 5),
 )
 let siteStatsItems = $derived.by(() =>
-	[
-		{
-			label: '访问',
-			value: data.siteStats.totalPageViews,
-			title: data.siteStats.totalPageViewsStartedAt
-				? `自 ${data.siteStats.totalPageViewsStartedAt} 起累计 PV`
-				: '累计页面浏览量',
-		},
-		{
-			label: '访客',
-			value: data.siteStats.uniqueVisitors,
-			title: data.siteStats.uniqueVisitorsApproximate
-				? `近 ${data.siteStats.range.days} 天按天独立访客汇总`
-				: '独立访客数',
-		},
-	].filter(
-		(item): item is { label: string; value: number; title: string } =>
-			typeof item.value === 'number' && Number.isFinite(item.value),
-	),
+  [
+    {
+      icon: 'views' as const,
+      label: '总访问',
+      value: data.siteStats.totalPageViews,
+      title: data.siteStats.totalPageViewsStartedAt
+        ? `自 ${data.siteStats.totalPageViewsStartedAt} 起累计 PV`
+        : '累计页面浏览量',
+    },
+    {
+      icon: 'visitors' as const,
+      label: '月访客',
+      value: data.siteStats.uniqueVisitors,
+      title: data.siteStats.uniqueVisitorsApproximate
+        ? `近 ${data.siteStats.range.days} 天按天独立访客汇总`
+        : '独立访客数',
+    },
+  ].filter(
+    (
+      item,
+    ): item is {
+      icon: SiteStatsIcon
+      label: string
+      value: number
+      title: string
+    } => typeof item.value === 'number' && Number.isFinite(item.value),
+  ),
 )
 let hasSiteStats = $derived(
-	data.siteStats.available && siteStatsItems.length > 0,
+  data.siteStats.available && siteStatsItems.length > 0,
 )
 
 onMount(() => {
-	themeMode = getSavedThemeMode()
-	resolvedTheme = resolveThemeMode(themeMode)
-	selectedHomeActivityPeriod = getSavedHomeActivityPeriod()
-	memberSample = shuffleMembers(avatarMembers).slice(0, sidebarMemberLimit)
-	randomizeProjects()
+  themeMode = getSavedThemeMode()
+  resolvedTheme = resolveThemeMode(themeMode)
+  selectedHomeActivityPeriod = getSavedHomeActivityPeriod()
+  memberSample = shuffleMembers(avatarMembers).slice(0, sidebarMemberLimit)
+  randomizeProjects()
 
-	return watchSystemTheme((systemTheme) => {
-		if (themeMode === 'auto') {
-			resolvedTheme = systemTheme
-		}
-	})
+  return watchSystemTheme((systemTheme) => {
+    if (themeMode === 'auto') {
+      resolvedTheme = systemTheme
+    }
+  })
 })
 
 function shuffleMembers(members: PageData['alumni']) {
-	return shuffleItems(members)
+  return shuffleItems(members)
 }
 
 function shuffleItems<T>(items: T[]) {
-	const shuffled = [...items]
+  const shuffled = [...items]
 
-	for (let index = shuffled.length - 1; index > 0; index -= 1) {
-		const swapIndex = Math.floor(Math.random() * (index + 1))
-		;[shuffled[index], shuffled[swapIndex]] = [
-			shuffled[swapIndex],
-			shuffled[index],
-		]
-	}
+  for (let index = shuffled.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(Math.random() * (index + 1))
+    ;[shuffled[index], shuffled[swapIndex]] = [
+      shuffled[swapIndex],
+      shuffled[index],
+    ]
+  }
 
-	return shuffled
+  return shuffled
 }
 
 function shuffleMemberList() {
-	memberOrder = shuffleMembers(data.alumni)
+  memberOrder = shuffleMembers(data.alumni)
 }
 
 function randomizeProjects() {
-	projectSample = shuffleItems(data.projects).slice(0, HOME_PROJECT_LIMIT)
+  projectSample = shuffleItems(data.projects).slice(0, HOME_PROJECT_LIMIT)
 }
 
 function cycleHomeActivityPeriod() {
-	const nextPeriod = getNextActivityPeriodKey(selectedHomeActivityPeriod)
+  const nextPeriod = getNextActivityPeriodKey(selectedHomeActivityPeriod)
 
-	selectedHomeActivityPeriod = nextPeriod
-	saveHomeActivityPeriod(nextPeriod)
+  selectedHomeActivityPeriod = nextPeriod
+  saveHomeActivityPeriod(nextPeriod)
 }
 
 function setThemeMode(mode: ThemeMode) {
-	themeMode = mode
-	resolvedTheme = resolveThemeMode(mode)
-	saveThemeMode(mode)
+  themeMode = mode
+  resolvedTheme = resolveThemeMode(mode)
+  saveThemeMode(mode)
 }
 
 function getPostAvatar(sourceName: string): string | null {
-	return alumniByName.get(sourceName)?.avatar ?? null
+  return alumniByName.get(sourceName)?.avatar ?? null
 }
 
 function getSavedHomeActivityPeriod(): ActivityPeriodKey {
-	if (typeof localStorage === 'undefined') return '7d'
+  if (typeof localStorage === 'undefined') return '7d'
 
-	const value = localStorage.getItem(HOME_ACTIVITY_STORAGE_KEY)
-	return isActivityPeriodKey(value) ? value : '7d'
+  const value = localStorage.getItem(HOME_ACTIVITY_STORAGE_KEY)
+  return isActivityPeriodKey(value) ? value : '7d'
 }
 
 function saveHomeActivityPeriod(period: ActivityPeriodKey) {
-	if (typeof localStorage === 'undefined') return
+  if (typeof localStorage === 'undefined') return
 
-	localStorage.setItem(HOME_ACTIVITY_STORAGE_KEY, period)
+  localStorage.setItem(HOME_ACTIVITY_STORAGE_KEY, period)
 }
 
 function sourceStatusLabel(status: string): string {
-	switch (status) {
-		case 'ok':
-			return '正常'
-		case 'empty':
-			return '未发现'
-		case 'error':
-			return '失败'
-		default:
-			return status
-	}
+  switch (status) {
+    case 'ok':
+      return '正常'
+    case 'empty':
+      return '未发现'
+    case 'error':
+      return '失败'
+    default:
+      return status
+  }
 }
 </script>
 
@@ -250,7 +263,7 @@ function sourceStatusLabel(status: string): string {
 					</span>
 				</div>
 				<a
-					href="https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-alumni.yml"
+					href={SUBMIT_ALUMNI_URL}
 					target="_blank"
 					rel="noopener noreferrer"
 					class="shrink-0 rounded-full bg-[#eef6ff] px-3 py-1 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
@@ -322,56 +335,6 @@ function sourceStatusLabel(status: string): string {
 		</section>
 
 		<aside class="space-y-4">
-			<section class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-				<div class="grid grid-cols-2 gap-3 text-sm">
-					<a
-						href="#feed"
-						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
-						aria-label="查看文章"
-					>
-						<p class="text-xl font-semibold">{data.blogPostCount}</p>
-						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章</p>
-					</a>
-					<a
-						href="#members"
-						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
-						aria-label="查看成员"
-					>
-						<p class="text-xl font-semibold">{totalAlumni}</p>
-						<p class="text-[#6b7280] dark:text-[#9aa4b2]">成员</p>
-					</a>
-					<a
-						href="#projects"
-						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
-						aria-label="查看项目"
-					>
-						<p class="text-xl font-semibold">{totalProjects}</p>
-						<p class="text-[#6b7280] dark:text-[#9aa4b2]">项目</p>
-					</a>
-					<a
-						href="#sources"
-						onclick={() => (sourcesExpanded = true)}
-						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
-						aria-label="查看文章来源"
-					>
-						<p class="text-xl font-semibold">{totalBlogs}</p>
-						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章源</p>
-					</a>
-				</div>
-				{#if hasSiteStats}
-					<div class="mt-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 border-t border-[#e5e7eb]/70 pt-2 text-[10px] leading-4 text-[#a1a8b3] dark:border-[#30363d]/70 dark:text-[#6e7681]">
-						{#each siteStatsItems as item, index}
-							<span title={item.title}>
-								{item.label} {formatMetric(item.value)}
-							</span>
-							{#if index < siteStatsItems.length - 1}
-								<span aria-hidden="true">·</span>
-							{/if}
-						{/each}
-					</div>
-				{/if}
-			</section>
-
 			{#if hasGitHubActivityData}
 				<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 					<div class="flex items-center justify-between gap-3 px-3 py-2.5 shadow-[0_1px_0_rgba(31,35,40,0.08)] sm:px-4 dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
@@ -434,46 +397,6 @@ function sourceStatusLabel(status: string): string {
 					{/if}
 				</section>
 			{/if}
-
-			<section class="rounded-2xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-				<div>
-					<a
-						href={REPOSITORY_URL}
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#f8fafc] sm:px-4 dark:hover:bg-[#1b2129]"
-					>
-						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-							<svg class="h-7 w-7" fill="currentColor" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Github</title><path d="M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z"></path></svg>
-						</div>
-						<div class="min-w-0 flex-1">
-							<p class="text-sm font-medium">GitHub 仓库</p>
-							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">dogxii/ZZULI.dev</p>
-						</div>
-						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
-							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
-						</svg>
-					</a>
-
-					<a
-						href="https://qm.qq.com/cgi-bin/qm/qr?k=1q3IN4-zn7JIQYdtBIIMF3N4otjgqB51&jump_from=webapi&authKey=nrhi6CY7BcXgEPiTqrs5+5NFX7um+Z9GKJbERupRl1XWfEPWiSm3abjXf/W4/3g9"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#f8fafc] sm:px-4 dark:hover:bg-[#1b2129]"
-					>
-						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
-							<img src="https://wiki.connect.qq.com/wp-content/uploads/2013/10/03_qq_symbol-1-768x921.png" alt="QQ" class="h-8 w-7" />
-						</div>
-						<div class="min-w-0 flex-1">
-							<p class="text-sm font-medium">QQ 交流群</p>
-							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">733107768</p>
-						</div>
-						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
-							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
-						</svg>
-					</a>
-				</div>
-			</section>
 
 			<section
 				id="projects"
@@ -557,6 +480,46 @@ function sourceStatusLabel(status: string): string {
 				</div>
 			</section>
 
+			<section class="rounded-2xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+				<div>
+					<a
+						href={REPOSITORY_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#f8fafc] sm:px-4 dark:hover:bg-[#1b2129]"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+							<svg class="h-7 w-7" fill="currentColor" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Github</title><path d="M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z"></path></svg>
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-medium">GitHub 仓库</p>
+							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">dogxii/ZZULI.dev</p>
+						</div>
+						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
+							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
+						</svg>
+					</a>
+
+					<a
+						href="https://qm.qq.com/cgi-bin/qm/qr?k=1q3IN4-zn7JIQYdtBIIMF3N4otjgqB51&jump_from=webapi&authKey=nrhi6CY7BcXgEPiTqrs5+5NFX7um+Z9GKJbERupRl1XWfEPWiSm3abjXf/W4/3g9"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-3 px-3 py-2.5 hover:bg-[#f8fafc] sm:px-4 dark:hover:bg-[#1b2129]"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+							<img src="https://wiki.connect.qq.com/wp-content/uploads/2013/10/03_qq_symbol-1-768x921.png" alt="QQ" class="h-8 w-7" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-medium">QQ 交流群</p>
+							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">733107768</p>
+						</div>
+						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
+							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
+						</svg>
+					</a>
+				</div>
+			</section>
+
 			<section class="hidden rounded-2xl bg-white p-3 shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:block dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 				<h2 class="text-sm font-semibold">成员</h2>
 				<div class="mt-3 grid grid-cols-7 gap-2">
@@ -588,6 +551,138 @@ function sourceStatusLabel(status: string): string {
 					{/if}
 				</div>
 			</section>
+
+			<section class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+				<div class="grid grid-cols-2 gap-3 text-sm">
+					<a
+						href="#feed"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看文章"
+					>
+						<p class="text-xl font-semibold">{data.blogPostCount}</p>
+						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章</p>
+					</a>
+					<a
+						href="#members"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看成员"
+					>
+						<p class="text-xl font-semibold">{totalAlumni}</p>
+						<p class="text-[#6b7280] dark:text-[#9aa4b2]">成员</p>
+					</a>
+					<a
+						href="#projects"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看项目"
+					>
+						<p class="text-xl font-semibold">{totalProjects}</p>
+						<p class="text-[#6b7280] dark:text-[#9aa4b2]">项目</p>
+					</a>
+					<a
+						href="#sources"
+						onclick={() => (sourcesExpanded = true)}
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看文章来源"
+					>
+						<p class="text-xl font-semibold">{totalBlogs}</p>
+						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章源</p>
+					</a>
+				</div>
+			</section>
+
+			<footer class="px-1 pb-1 text-xs leading-5 text-[#8b949e] dark:text-[#6e7681]">
+				{#if hasSiteStats}
+					<div class="mb-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] leading-4">
+						{#each siteStatsItems as item}
+							<span class="inline-flex items-center gap-1" title={item.title}>
+								{#if item.icon === 'views'}
+									<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<path d="M1.75 8s2.5-4 6.25-4 6.25 4 6.25 4-2.5 4-6.25 4-6.25-4-6.25-4Z"></path>
+										<circle cx="8" cy="8" r="1.75"></circle>
+									</svg>
+								{:else}
+									<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+										<circle cx="6" cy="5" r="2.25"></circle>
+										<path d="M2.75 13c.35-2.05 1.55-3.25 3.25-3.25S8.9 10.95 9.25 13"></path>
+										<path d="M10.25 7.25a2 2 0 0 0 .5-3.85"></path>
+										<path d="M11 10c1.25.2 2.05 1.15 2.25 3"></path>
+									</svg>
+								{/if}
+								<span>{item.label} {formatMetric(item.value)}</span>
+							</span>
+						{/each}
+					</div>
+				{/if}
+				<nav class="flex flex-wrap items-center gap-x-1.5 gap-y-1" aria-label="站点链接">
+					<a
+						href={REPOSITORY_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+					>
+						GitHub
+					</a>
+					<span aria-hidden="true">·</span>
+					<a
+						href={SUBMIT_ALUMNI_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+					>
+						提交收录
+					</a>
+					<span aria-hidden="true">·</span>
+					<a
+						href={SUBMIT_PROJECT_URL}
+						target="_blank"
+						rel="noopener noreferrer"
+						class="hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+					>
+						提交项目
+					</a>
+					<span aria-hidden="true">·</span>
+					<a
+						href="/links"
+						class="hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+					>
+						友情链接
+					</a>
+				</nav>
+				<div class="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-1">
+					<span>© {COPYRIGHT_YEAR} ZZULI.dev</span>
+					<span aria-hidden="true">·</span>
+					<a
+						href={`mailto:${CONTACT_EMAIL}`}
+						class="inline-flex items-center hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+						aria-label={`发送邮件到 ${CONTACT_EMAIL}`}
+						title={CONTACT_EMAIL}
+					>
+						<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M2.75 4.25h10.5v7.5H2.75z"></path>
+							<path d="m3.25 4.75 4.75 3.5 4.75-3.5"></path>
+						</svg>
+					</a>
+					<span aria-hidden="true">·</span>
+					<a
+						href="/sitemap.xml"
+						class="inline-flex items-center hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+						aria-label="查看 Sitemap"
+						title="Sitemap"
+					>
+						<svg class="h-3.5 w-3.5" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+							<path d="M8 2.5v3"></path>
+							<path d="M4 8.5v2"></path>
+							<path d="M12 8.5v2"></path>
+							<path d="M4 8.5h8"></path>
+							<path d="M8 5.5v3"></path>
+							<rect x="5.75" y="1.5" width="4.5" height="2.5" rx="0.75"></rect>
+							<rect x="1.75" y="10.5" width="4.5" height="2.5" rx="0.75"></rect>
+							<rect x="9.75" y="10.5" width="4.5" height="2.5" rx="0.75"></rect>
+						</svg>
+					</a>
+				</div>
+				<p class="mt-1">本站由校友自发创建，非学校官方网站，与学校无任何隶属关系，不代表官方立场</p>
+			</footer>
 		</aside>
 
 		<section
