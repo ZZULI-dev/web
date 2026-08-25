@@ -1,42 +1,40 @@
 <script lang="ts">
-	import type { ResolvedTheme, ThemeMode } from '$lib/theme'
+import type { ResolvedTheme, ThemeMode } from '$lib/theme'
 
-	type Props = {
-		brandAriaLabel?: string
-		brandHref?: string
-		onAbout?: () => void
-		onThemeModeChange: (mode: ThemeMode) => void
-		resolvedTheme: ResolvedTheme
-		showArticlesLink?: boolean
-		showHomeLink?: boolean
-		subtitle: string
-		themeMode: ThemeMode
-	}
+type Props = {
+	brandAriaLabel?: string
+	brandHref?: string
+	onThemeModeChange: (mode: ThemeMode) => void
+	resolvedTheme: ResolvedTheme
+	showArticlesLink?: boolean
+	showProjectsLink?: boolean
+	subtitle: string
+	themeMode: ThemeMode
+}
 
-	const themeOptions: Array<{ label: string; mode: ThemeMode }> = [
-		{ label: 'Light', mode: 'light' },
-		{ label: 'Dark', mode: 'dark' },
-		{ label: 'Auto', mode: 'auto' },
-	]
+const themeOptions: Array<{ label: string; mode: ThemeMode }> = [
+	{ label: 'Light', mode: 'light' },
+	{ label: 'Dark', mode: 'dark' },
+	{ label: 'Auto', mode: 'auto' },
+]
 
-	let {
-		brandAriaLabel = '返回首页',
-		brandHref = '/',
-		onAbout,
-		onThemeModeChange,
-		resolvedTheme,
-		showArticlesLink = false,
-		showHomeLink = false,
-		subtitle,
-		themeMode,
-	}: Props = $props()
+let {
+	brandAriaLabel = '返回首页',
+	brandHref = '/',
+	onThemeModeChange,
+	resolvedTheme,
+	showArticlesLink = false,
+	showProjectsLink = false,
+	subtitle,
+	themeMode,
+}: Props = $props()
 
-	let themeMenuOpen = $state(false)
+let themeMenuOpen = $state(false)
 
-	function chooseThemeMode(mode: ThemeMode) {
-		onThemeModeChange(mode)
-		themeMenuOpen = false
-	}
+function chooseThemeMode(mode: ThemeMode) {
+	onThemeModeChange(mode)
+	themeMenuOpen = false
+}
 </script>
 
 <header class="sticky top-0 z-30 bg-[#fdfdfd]/90 shadow-[0_1px_0_rgba(31,35,40,0.08)] backdrop-blur dark:bg-[#15191f]/88 dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
@@ -66,22 +64,13 @@
 					文章
 				</a>
 			{/if}
-			{#if showHomeLink}
+			{#if showProjectsLink}
 				<a
-					href="/"
+					href="/projects"
 					class="rounded-full px-3 py-1.5 text-sm font-medium text-[#4b5563] hover:bg-[#eef2f7] dark:text-[#b6beca] dark:hover:bg-[#202631]"
 				>
-					首页
+					项目
 				</a>
-			{/if}
-			{#if onAbout}
-				<button
-					type="button"
-					onclick={() => onAbout?.()}
-					class="rounded-full px-3 py-1.5 text-sm font-medium text-[#4b5563] hover:bg-[#eef2f7] dark:text-[#b6beca] dark:hover:bg-[#202631]"
-				>
-					关于
-				</button>
 			{/if}
 			<div class="relative">
 				<button

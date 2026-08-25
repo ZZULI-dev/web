@@ -4,12 +4,15 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 
-const ROOT_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..')
-const README_PATH = path.join(ROOT_DIR, 'README.md')
+const ROOT_DIR = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	'..',
+)
+const ALUMNI_PATH = path.join(ROOT_DIR, 'data', 'alumni.json')
 const OUTPUT_PATH = path.join(ROOT_DIR, 'data', 'blog-posts.json')
 
 const USER_AGENT =
-	'zzuli-developers-blog-crawler/0.1 (+https://github.com/dogxii/zzuli-developers)'
+	'ZZULI.dev-blog-crawler/0.1 (+https://github.com/dogxii/ZZULI.dev)'
 const TIMEOUT_MS = Number(process.env.CRAWL_TIMEOUT_MS ?? 10000)
 const CONCURRENCY = Number(process.env.CRAWL_CONCURRENCY ?? 4)
 const POSTS_PER_SOURCE = Number(process.env.POSTS_PER_SOURCE ?? 0)
@@ -19,7 +22,9 @@ const DEBUG_LINKED = process.env.DEBUG_LINKED === '1'
 const MIN_POST_DATE = process.env.MIN_POST_DATE
 	? new Date(process.env.MIN_POST_DATE)
 	: yearsAgo(new Date(), RECENT_YEARS)
-const MIN_POST_TIME = Number.isNaN(MIN_POST_DATE.getTime()) ? null : MIN_POST_DATE.getTime()
+const MIN_POST_TIME = Number.isNaN(MIN_POST_DATE.getTime())
+	? null
+	: MIN_POST_DATE.getTime()
 
 const NAV_TITLES = new Set([
 	'about',
@@ -70,55 +75,21 @@ const ARTICLE_HINTS = [
 	/\/article\/details\/\d+/i,
 ]
 
-function parseMarkdownLink(value) {
-	const match = value.match(/\[(.*?)\]\((.*?)\)/)
-	if (!match) return null
-
-	return {
-		text: match[1].trim(),
-		url: match[2].trim(),
-	}
-}
-
 async function readSources() {
-	const content = await fs.readFile(README_PATH, 'utf-8')
-	const lines = content.split('\n')
-	const sources = []
-	let currentSection = ''
-
-	for (const line of lines) {
-		const trimmed = line.trim()
-
-		if (trimmed.startsWith('## ')) {
-			currentSection = trimmed.slice(3).trim()
-			continue
-		}
-
-		if (currentSection !== '校友大合集') continue
-		if (
-			trimmed.startsWith('| 昵称') ||
-			trimmed.startsWith('| ---') ||
-			!trimmed.startsWith('|')
-		) {
-			continue
-		}
-
-		const cells = trimmed
-			.split('|')
-			.map((cell) => cell.trim())
-			.filter(Boolean)
-
-		if (cells.length < 3) continue
-
-		const blog = parseMarkdownLink(cells[2])
-		if (!blog?.url || !/^https?:\/\//i.test(blog.url)) continue
-
-		sources.push({
-			name: cells[0],
-			siteName: blog.text || cells[0],
-			url: normalizeUrl(blog.url),
-		})
+	const alumni = JSON.parse(await fs.readFile(ALUMNI_PATH, 'utf-8'))
+	if (!Array.isArray(alumni)) {
+		throw new Error('data/alumni.json must be an array')
 	}
+
+	const sources = alumni
+		.filter(
+			(person) => person.blog?.url && /^https?:\/\//i.test(person.blog.url),
+		)
+		.map((person) => ({
+			name: person.nickname,
+			siteName: person.blog.name || person.nickname,
+			url: normalizeUrl(person.blog.url),
+		}))
 
 	return dedupeBy(sources, (source) => source.url)
 }
@@ -151,7 +122,8 @@ function yearsAgo(date, years) {
 
 function parseAttributes(tag) {
 	const attrs = new Map()
-	const attrPattern = /([:@\w-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
+	const attrPattern =
+		/([:@\w-]+)(?:\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'=<>`]+)))?/g
 
 	for (const match of tag.matchAll(attrPattern)) {
 		const key = match[1].toLowerCase()
@@ -163,7 +135,10 @@ function parseAttributes(tag) {
 	return attrs
 }
 
-async function fetchText(url, accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8') {
+async function fetchText(
+	url,
+	accept = 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+) {
 	const controller = new AbortController()
 	const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS)
 
@@ -307,7 +282,12 @@ async function collectSource(source, depth = 0) {
 	}
 
 	if (homepage) {
-		const htmlPosts = await extractHtmlPosts(homepage.text, homepage.url, activeSource, fetchedAt)
+		const htmlPosts = await extractHtmlPosts(
+			homepage.text,
+			homepage.url,
+			activeSource,
+			fetchedAt,
+		)
 		if (htmlPosts.length > 0) {
 			return {
 				source: activeSource,
@@ -318,7 +298,11 @@ async function collectSource(source, depth = 0) {
 		}
 	}
 
-	const sitemapPosts = await collectSitemapPosts(homepage?.url ?? activeSource.url, activeSource, fetchedAt)
+	const sitemapPosts = await collectSitemapPosts(
+		homepage?.url ?? activeSource.url,
+		activeSource,
+		fetchedAt,
+	)
 	if (sitemapPosts.length > 0) {
 		return {
 			source: activeSource,
@@ -329,9 +313,16 @@ async function collectSource(source, depth = 0) {
 	}
 
 	if (homepage && depth < 1) {
-		for (const linkedUrl of extractLinkedBlogUrls(homepage.text, homepage.url).slice(0, 3)) {
-			if (DEBUG_LINKED) console.log(`linked candidate ${source.name}: ${linkedUrl}`)
-			const linkedResult = await collectSource({ ...source, url: linkedUrl }, depth + 1)
+		for (const linkedUrl of extractLinkedBlogUrls(
+			homepage.text,
+			homepage.url,
+		).slice(0, 3)) {
+			if (DEBUG_LINKED)
+				console.log(`linked candidate ${source.name}: ${linkedUrl}`)
+			const linkedResult = await collectSource(
+				{ ...source, url: linkedUrl },
+				depth + 1,
+			)
 			if (DEBUG_LINKED) {
 				console.log(
 					`linked result ${source.name}: ${linkedResult.status} ${linkedResult.strategy} ${linkedResult.posts.length}`,
@@ -381,7 +372,9 @@ function candidateHomeUrls(homeUrl) {
 function extractLinkedBlogUrls(html, baseUrl) {
 	const candidates = []
 
-	for (const [index, match] of [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].entries()) {
+	for (const [index, match] of [
+		...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi),
+	].entries()) {
 		const attrs = parseAttributes(`<a ${match[1]}>`)
 		const href = attrs.get('href')
 		if (!href || /^(#|javascript:|mailto:|tel:)/i.test(href)) continue
@@ -396,17 +389,23 @@ function extractLinkedBlogUrls(html, baseUrl) {
 		if (isSameSite(url, baseUrl)) continue
 
 		const parsedUrl = new URL(url)
-		if (/(github|bilibili|qq|twitter|x\.com|discord|vercel|hexo)\./i.test(parsedUrl.hostname)) {
+		if (
+			/(github|bilibili|qq|twitter|x\.com|discord|vercel|hexo)\./i.test(
+				parsedUrl.hostname,
+			)
+		) {
 			continue
 		}
 
 		const label = cleanText(attrs.get('title') ?? '') || cleanText(match[2])
-		const haystack = `${label} ${parsedUrl.hostname} ${parsedUrl.pathname}`.toLowerCase()
+		const haystack =
+			`${label} ${parsedUrl.hostname} ${parsedUrl.pathname}`.toLowerCase()
 		let score = 0
 
 		if (/(blog|博客|文章)/i.test(haystack)) score += 5
 		if (/(note|notes|笔记)/i.test(haystack)) score += 4
-		if (/csdn\.net|cnblogs\.com|github\.io/i.test(parsedUrl.hostname)) score += 2
+		if (/csdn\.net|cnblogs\.com|github\.io/i.test(parsedUrl.hostname))
+			score += 2
 		if (score <= 0) continue
 
 		candidates.push({ url, score, index })
@@ -466,9 +465,12 @@ function parseJsonFeed(text, feedUrl, source, fetchedAt) {
 
 		return parsed.items
 			.map((item, index) => {
-				const title = cleanText(item.title ?? item.summary ?? item.content_text ?? '')
+				const title = cleanText(
+					item.title ?? item.summary ?? item.content_text ?? '',
+				)
 				const link = item.url ?? item.external_url ?? item.id
-				const publishedAt = parseDate(item.date_published) ?? parseDate(item.date_modified)
+				const publishedAt =
+					parseDate(item.date_published) ?? parseDate(item.date_modified)
 
 				if (!title || !link) return null
 
@@ -491,7 +493,9 @@ function parseJsonFeed(text, feedUrl, source, fetchedAt) {
 
 function readXmlTag(block, tagName) {
 	const escaped = tagName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-	const match = block.match(new RegExp(`<${escaped}\\b[^>]*>([\\s\\S]*?)<\\/${escaped}>`, 'i'))
+	const match = block.match(
+		new RegExp(`<${escaped}\\b[^>]*>([\\s\\S]*?)<\\/${escaped}>`, 'i'),
+	)
 	if (!match) return ''
 
 	return decodeHtml(match[1].replace(/^<!\[CDATA\[|\]\]>$/g, '').trim())
@@ -514,7 +518,9 @@ function readAtomLink(block) {
 async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
 	const candidates = []
 
-	for (const [index, match] of [...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi)].entries()) {
+	for (const [index, match] of [
+		...html.matchAll(/<a\b([^>]*)>([\s\S]*?)<\/a>/gi),
+	].entries()) {
 		const attrs = parseAttributes(`<a ${match[1]}>`)
 		const href = attrs.get('href')
 		if (!href || /^(#|javascript:|mailto:|tel:)/i.test(href)) continue
@@ -543,23 +549,29 @@ async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
 		})
 	}
 
-	const selectedCandidates = dedupeBy(candidates, (candidate) => candidate.url)
-		.sort((a, b) => b.score - a.score || a.index - b.index)
+	const selectedCandidates = dedupeBy(
+		candidates,
+		(candidate) => candidate.url,
+	).sort((a, b) => b.score - a.score || a.index - b.index)
 	const limitedCandidates = takeLimit(selectedCandidates, POSTS_PER_SOURCE)
 
-	const resolvedCandidates = await mapLimit(limitedCandidates, 2, async (candidate) => {
-		try {
-			const page = await fetchText(candidate.url)
-			const pageTitle = extractPageTitle(page.text, source)
-			if (pageTitle) {
-				return { ...candidate, title: pageTitle }
+	const resolvedCandidates = await mapLimit(
+		limitedCandidates,
+		2,
+		async (candidate) => {
+			try {
+				const page = await fetchText(candidate.url)
+				const pageTitle = extractPageTitle(page.text, source)
+				if (pageTitle) {
+					return { ...candidate, title: pageTitle }
+				}
+			} catch {
+				// The homepage title is good enough when the article page blocks requests.
 			}
-		} catch {
-			// The homepage title is good enough when the article page blocks requests.
-		}
 
-		return candidate
-	})
+			return candidate
+		},
+	)
 
 	return resolvedCandidates
 		.map((candidate, rank) =>
@@ -587,7 +599,11 @@ function isPlausibleTitle(title) {
 	const normalized = title.trim()
 	const navKey = normalized.toLowerCase()
 
-	return normalized.length >= 3 && normalized.length <= 120 && !NAV_TITLES.has(navKey)
+	return (
+		normalized.length >= 3 &&
+		normalized.length <= 120 &&
+		!NAV_TITLES.has(navKey)
+	)
 }
 
 function scoreHtmlCandidate(value, title, anchorHtml) {
@@ -598,7 +614,8 @@ function scoreHtmlCandidate(value, title, anchorHtml) {
 
 	if (PATH_BLOCKLIST.some((pattern) => pattern.test(lowerPath))) score -= 10
 	if (ARTICLE_HINTS.some((pattern) => pattern.test(value))) score += 7
-	if (/(post|article|entry|item|title|card|archive)/i.test(anchorHtml)) score += 3
+	if (/(post|article|entry|item|title|card|archive)/i.test(anchorHtml))
+		score += 3
 	if (/<h[1-3]\b/i.test(anchorHtml)) score += 2
 	if (title.length >= 6 && title.length <= 80) score += 2
 	if (pathValue.split('/').filter(Boolean).length >= 2) score += 1
@@ -617,7 +634,9 @@ async function collectSitemapPosts(homeUrl, source, fetchedAt) {
 
 	for (const sitemapUrl of sitemapUrls) {
 		try {
-			documents.push(await fetchText(sitemapUrl, 'application/xml,text/xml,*/*;q=0.8'))
+			documents.push(
+				await fetchText(sitemapUrl, 'application/xml,text/xml,*/*;q=0.8'),
+			)
 			break
 		} catch {
 			// Try the next sitemap location.
@@ -630,32 +649,42 @@ async function collectSitemapPosts(homeUrl, source, fetchedAt) {
 	const locs = parseSitemapLocs(firstDocument.text)
 	const nestedSitemaps = locs
 		.map((entry) => entry.loc)
-		.filter((loc) => /\.xml(?:\.gz)?$/i.test(loc) && /(?:post|article|page|sitemap)/i.test(loc))
+		.filter(
+			(loc) =>
+				/\.xml(?:\.gz)?$/i.test(loc) &&
+				/(?:post|article|page|sitemap)/i.test(loc),
+		)
 		.slice(0, 4)
 
 	for (const nestedUrl of nestedSitemaps) {
 		try {
-			documents.push(await fetchText(nestedUrl, 'application/xml,text/xml,*/*;q=0.8'))
+			documents.push(
+				await fetchText(nestedUrl, 'application/xml,text/xml,*/*;q=0.8'),
+			)
 		} catch {
 			// Nested sitemaps are best-effort.
 		}
 	}
 
-	const entries = takeLimit(dedupeBy(
-		documents
-			.flatMap((document) => parseSitemapLocs(document.text))
-			.filter((entry) => isSameSite(entry.loc, homeUrl))
-			.filter((entry) => isLikelySitemapArticle(entry.loc, homeUrl))
-			.map((entry) => ({
-				...entry,
-				publishedAt: inferDateFromUrl(entry.loc) ?? parseDate(entry.lastmod),
-			}))
-			.sort(
-				(a, b) =>
-					Number(new Date(b.publishedAt ?? 0)) - Number(new Date(a.publishedAt ?? 0)),
-			),
-		(entry) => entry.loc,
-	), POSTS_PER_SOURCE)
+	const entries = takeLimit(
+		dedupeBy(
+			documents
+				.flatMap((document) => parseSitemapLocs(document.text))
+				.filter((entry) => isSameSite(entry.loc, homeUrl))
+				.filter((entry) => isLikelySitemapArticle(entry.loc, homeUrl))
+				.map((entry) => ({
+					...entry,
+					publishedAt: inferDateFromUrl(entry.loc) ?? parseDate(entry.lastmod),
+				}))
+				.sort(
+					(a, b) =>
+						Number(new Date(b.publishedAt ?? 0)) -
+						Number(new Date(a.publishedAt ?? 0)),
+				),
+			(entry) => entry.loc,
+		),
+		POSTS_PER_SOURCE,
+	)
 
 	const resolvedEntries = await mapLimit(entries, 2, async (entry, rank) => {
 		const fallbackTitle = titleFromUrl(entry.loc)
@@ -726,7 +755,16 @@ function parseSitemapLocs(xml) {
 	}))
 }
 
-function makePost({ title, url, baseUrl, source, publishedAt, fetchedAt, discoveredBy, rank }) {
+function makePost({
+	title,
+	url,
+	baseUrl,
+	source,
+	publishedAt,
+	fetchedAt,
+	discoveredBy,
+	rank,
+}) {
 	let normalizedUrl
 
 	try {
@@ -736,7 +774,11 @@ function makePost({ title, url, baseUrl, source, publishedAt, fetchedAt, discove
 	}
 
 	return {
-		id: crypto.createHash('sha1').update(`${source.url}:${normalizedUrl}`).digest('hex').slice(0, 12),
+		id: crypto
+			.createHash('sha1')
+			.update(`${source.url}:${normalizedUrl}`)
+			.digest('hex')
+			.slice(0, 12),
 		title: cleanText(title),
 		url: normalizedUrl,
 		sourceName: source.name,
@@ -759,7 +801,11 @@ function extractPageTitle(html, source) {
 
 	const cleanTitle = cleanText(metaTitle || h1 || title || '')
 
-	if (!cleanTitle || cleanTitle === source.siteName || cleanTitle === source.name) {
+	if (
+		!cleanTitle ||
+		cleanTitle === source.siteName ||
+		cleanTitle === source.name
+	) {
 		return ''
 	}
 
@@ -776,7 +822,6 @@ function readMetaContent(html, attrName, attrValue) {
 
 	return ''
 }
-
 
 function isUsefulSitemapTitle(title, fallbackTitle, source) {
 	if (!isPlausibleTitle(title)) return false
@@ -808,16 +853,22 @@ function decodeHtml(value) {
 		quot: '"',
 	}
 
-	return String(value ?? '').replace(/&(#x?[0-9a-f]+|\w+);/gi, (entity, code) => {
-		if (code[0] === '#') {
-			const isHex = code[1]?.toLowerCase() === 'x'
-			const number = Number.parseInt(code.slice(isHex ? 2 : 1), isHex ? 16 : 10)
+	return String(value ?? '').replace(
+		/&(#x?[0-9a-f]+|\w+);/gi,
+		(entity, code) => {
+			if (code[0] === '#') {
+				const isHex = code[1]?.toLowerCase() === 'x'
+				const number = Number.parseInt(
+					code.slice(isHex ? 2 : 1),
+					isHex ? 16 : 10,
+				)
 
-			return Number.isFinite(number) ? String.fromCodePoint(number) : entity
-		}
+				return Number.isFinite(number) ? String.fromCodePoint(number) : entity
+			}
 
-		return named[code.toLowerCase()] ?? entity
-	})
+			return named[code.toLowerCase()] ?? entity
+		},
+	)
 }
 
 function parseDate(value) {
@@ -832,7 +883,11 @@ function inferDateFromUrl(value) {
 		/(?:^|[/-])(\d{4})[/-](\d{2})(\d{2})(?:\d{2})?(?:\.[a-z0-9]+)?(?:[?#]|$)/i,
 	)
 	if (compactMatch) {
-		return makeIsoDate(Number(compactMatch[1]), Number(compactMatch[2]), Number(compactMatch[3]))
+		return makeIsoDate(
+			Number(compactMatch[1]),
+			Number(compactMatch[2]),
+			Number(compactMatch[3]),
+		)
 	}
 
 	const match = value.match(/(?:^|[/-])(\d{4})[/-](\d{1,2})(?:[/-](\d{1,2}))?/)
@@ -893,7 +948,9 @@ async function mapLimit(values, limit, mapper) {
 		}
 	}
 
-	await Promise.all(Array.from({ length: Math.min(limit, values.length) }, worker))
+	await Promise.all(
+		Array.from({ length: Math.min(limit, values.length) }, worker),
+	)
 	return results
 }
 
@@ -937,23 +994,30 @@ function filterRecentResult(result) {
 const sources = await readSources()
 console.log(`Collecting posts from ${sources.length} blog sources...`)
 if (MIN_POST_TIME) {
-	console.log(`Keeping posts since ${MIN_POST_DATE.toISOString().slice(0, 10)}...`)
+	console.log(
+		`Keeping posts since ${MIN_POST_DATE.toISOString().slice(0, 10)}...`,
+	)
 }
 
-const results = (await mapLimit(sources, CONCURRENCY, (source) => collectSource(source))).map(
-	filterRecentResult,
-)
+const results = (
+	await mapLimit(sources, CONCURRENCY, (source) => collectSource(source))
+).map(filterRecentResult)
 const generatedAt = new Date().toISOString()
-const posts = takeLimit(sortPosts(
-	dedupeBy(
-		results
-			.flatMap((result) => result.posts)
-			.filter(Boolean),
-		(post) => post.url,
+const posts = takeLimit(
+	sortPosts(
+		dedupeBy(
+			results.flatMap((result) => result.posts).filter(Boolean),
+			(post) => post.url,
+		),
 	),
-), MAX_TOTAL_POSTS)
+	MAX_TOTAL_POSTS,
+)
 
 const output = {
+	crawl: {
+		minPostDate: MIN_POST_TIME ? MIN_POST_DATE.toISOString().slice(0, 10) : null,
+		recentYears: process.env.MIN_POST_DATE ? null : RECENT_YEARS,
+	},
 	generatedAt,
 	sourceCount: sources.length,
 	okSourceCount: results.filter((result) => result.status === 'ok').length,
@@ -971,12 +1035,20 @@ const output = {
 }
 
 await fs.mkdir(path.dirname(OUTPUT_PATH), { recursive: true })
-await fs.writeFile(`${OUTPUT_PATH}.tmp`, `${JSON.stringify(output, null, 2)}\n`, 'utf-8')
+await fs.writeFile(
+	`${OUTPUT_PATH}.tmp`,
+	`${JSON.stringify(output, null, 2)}\n`,
+	'utf-8',
+)
 await fs.rename(`${OUTPUT_PATH}.tmp`, OUTPUT_PATH)
 
 for (const result of results) {
 	const status = result.status === 'ok' ? 'ok' : result.status
-	console.log(`${status.padEnd(5)} ${result.strategy.padEnd(7)} ${String(result.posts.length).padStart(2)} ${result.source.name}`)
+	console.log(
+		`${status.padEnd(5)} ${result.strategy.padEnd(7)} ${String(result.posts.length).padStart(2)} ${result.source.name}`,
+	)
 }
 
-console.log(`Wrote ${posts.length} posts to ${path.relative(ROOT_DIR, OUTPUT_PATH)}`)
+console.log(
+	`Wrote ${posts.length} posts to ${path.relative(ROOT_DIR, OUTPUT_PATH)}`,
+)

@@ -1,0 +1,50 @@
+name: 提交项目
+description: 提交一个 ZZULI 相关项目
+title: "[项目] "
+labels: ["pending-review", "project-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        填写会公开展示的信息即可，维护者审核后收录。同一项目链接再次提交会更新资料；语言留空会保留已有语言。
+
+  - type: input
+    id: name
+    attributes:
+      label: 项目名称
+      description: 展示用名称
+      placeholder: 例如：Hello CTF - CTF 入门教程
+    validations:
+      required: true
+
+  - type: input
+    id: author_github
+    attributes:
+      label: 作者 GitHub（可选）
+      description: 用于展示作者头像；留空会尝试从 GitHub 项目链接推导
+      placeholder: 例如：ProbiusOfficial
+
+  - type: input
+    id: url
+    attributes:
+      label: 项目链接
+      description: GitHub、官网或文档地址
+      placeholder: 例如：https://github.com/dogxii/ZZULI.dev
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: 项目简介
+      description: 一句话说明项目做什么
+      placeholder: 例如：ZZULI 开发者的成员、项目和博客文章索引。
+    validations:
+      required: true
+
+  - type: input
+    id: languages
+    attributes:
+      label: 主要语言（可选）
+      description: 用逗号分隔
+      placeholder: 例如：TypeScript, C++, Other

@@ -5,18 +5,32 @@ export type Project = {
 	name: string
 	url: string
 	description: string
-}
-
-export type Link = {
-	text: string
-	url: string | null
+	author: {
+		name: string
+		github: string | null
+		url: string | null
+		avatar: string | null
+	}
+	languages: Array<{
+		name: string
+		color: string
+	}>
+	submittedAt: string | null
 }
 
 export type Alumni = {
+	id: string
 	nickname: string
-	github: Link
-	blog: Link | null
-	avatar: string | null
+	github: {
+		username: string
+		url: string
+	}
+	blog: {
+		name: string
+		url: string
+	} | null
+	avatar: string
+	profilePath: string
 }
 
 export type BlogPost = {
@@ -42,6 +56,10 @@ export type BlogSource = {
 }
 
 type BlogPostsFile = {
+	crawl?: {
+		minPostDate?: string | null
+		recentYears?: number | null
+	}
 	generatedAt?: string
 	posts?: BlogPost[]
 	sources?: BlogSource[]
@@ -50,6 +68,54 @@ type BlogPostsFile = {
 type LoadSiteDataOptions = {
 	postLimit?: number
 }
+
+const DEFAULT_BLOG_CRAWL_YEARS = 2
+
+type AlumniRecord = {
+	nickname?: string
+	github?: string
+	blog?: {
+		name?: string
+		url?: string
+	} | null
+}
+
+type ProjectRecord = {
+	name?: string
+	url?: string
+	description?: string
+	author?:
+		| {
+				name?: string
+				github?: string
+		  }
+		| string
+	languages?: string[]
+	submittedAt?: string
+}
+
+const LANGUAGE_COLORS: Record<string, string> = {
+	'C++': '#f34b7d',
+	C: '#555555',
+	CSS: '#563d7c',
+	Go: '#00add8',
+	HTML: '#e34c26',
+	Java: '#b07219',
+	JavaScript: '#f1e05a',
+	Other: '#8b949e',
+	Python: '#3572a5',
+	Rust: '#dea584',
+	Shell: '#89e051',
+	Svelte: '#ff3e00',
+	TypeScript: '#3178c6',
+	Vue: '#41b883',
+}
+const KNOWN_LANGUAGE_NAMES = new Map(
+	Object.keys(LANGUAGE_COLORS).map((language) => [
+		language.toLowerCase(),
+		language,
+	]),
+)
 
 function findRepoFile(relativePath: string): string | null {
 	const candidates = [
@@ -66,87 +132,160 @@ function findRepoFile(relativePath: string): string | null {
 	return null
 }
 
-function parseLink(md: string): Link {
-	const match = md.match(/\[(.*?)\]\((.*?)\)/)
-	if (match) {
-		return { text: match[1], url: match[2] }
-	}
-
-	const text = md.trim()
-	return { text, url: text.startsWith('http') ? text : null }
+function normalizeGitHubUsername(value: string): string {
+	return value
+		.trim()
+		.replace(/^@/, '')
+		.replace(/^https?:\/\/github\.com\//i, '')
+		.replace(/[/?#].*$/, '')
 }
 
-function parseReadme(content: string): { projects: Project[]; alumni: Alumni[] } {
-	const lines = content.split('\n')
-	const projects: Project[] = []
-	const alumni: Alumni[] = []
-	let currentSection = ''
+function inferGitHubOwner(url: string): string {
+	const match = url.match(/^https?:\/\/github\.com\/([^/?#]+)/i)
+	return match ? normalizeGitHubUsername(match[1]) : ''
+}
 
-	for (const line of lines) {
-		const trimmedLine = line.trim()
+function toProjectAuthor(
+	record: ProjectRecord,
+	projectUrl: string,
+): Project['author'] {
+	const authorName =
+		typeof record.author === 'string'
+			? record.author.trim()
+			: record.author?.name?.trim()
+	const github =
+		typeof record.author === 'object'
+			? normalizeGitHubUsername(record.author.github ?? '')
+			: inferGitHubOwner(projectUrl)
+	const fallbackGithub = github || inferGitHubOwner(projectUrl)
+	const displayName = authorName || fallbackGithub || '未知作者'
 
-		if (trimmedLine.startsWith('## ')) {
-			currentSection = trimmedLine.substring(3).trim()
-			continue
-		}
+	return {
+		name: displayName,
+		github: fallbackGithub || null,
+		url: fallbackGithub ? `https://github.com/${fallbackGithub}` : null,
+		avatar: fallbackGithub ? `https://github.com/${fallbackGithub}.png` : null,
+	}
+}
 
-		if (currentSection === '项目列表') {
-			const match = trimmedLine.match(/^- \[(.*?)\]\((.*?)\): (.*)$/)
-			if (match) {
-				projects.push({
-					name: match[1],
-					url: match[2],
-					description: match[3],
-				})
-			}
-			continue
-		}
+function toProjectLanguages(languages: string[] | undefined) {
+	const names =
+		Array.isArray(languages) && languages.length > 0 ? languages : ['Other']
 
-		if (currentSection !== '校友大合集') {
-			continue
-		}
+	const normalized = names
+		.map((language) => language.trim())
+		.filter(Boolean)
+		.map(
+			(language) =>
+				KNOWN_LANGUAGE_NAMES.get(language.toLowerCase()) ?? language,
+		)
+	const displayLanguages =
+		normalized.length > 0 ? Array.from(new Set(normalized)) : ['Other']
 
-		if (
-			trimmedLine.startsWith('| 昵称') ||
-			trimmedLine.startsWith('| ---') ||
-			!trimmedLine.startsWith('|')
-		) {
-			continue
-		}
+	return displayLanguages.map((language) => ({
+		name: language,
+		color: LANGUAGE_COLORS[language] ?? LANGUAGE_COLORS.Other,
+	}))
+}
 
-		const cols = trimmedLine
-			.split('|')
-			.map((cell) => cell.trim())
-			.filter(Boolean)
+function toAlumni(record: AlumniRecord): Alumni | null {
+	const nickname = record.nickname?.trim()
+	const username = normalizeGitHubUsername(record.github ?? '')
 
-		if (cols.length < 2) {
-			continue
-		}
-
-		const nickname = cols[0]
-		const github = parseLink(cols[1])
-		const blog = cols[2] ? parseLink(cols[2]) : null
-		let avatar: string | null = null
-
-		if (github.url) {
-			const match = github.url.match(/github\.com\/([^/]+)/)
-			if (match) {
-				avatar = `https://github.com/${match[1]}.png`
-			}
-		}
-
-		alumni.push({
-			nickname,
-			github,
-			blog,
-			avatar,
-		})
+	if (!nickname || !username) {
+		return null
 	}
 
-	return { projects, alumni }
+	return {
+		id: username.toLowerCase(),
+		nickname,
+		github: {
+			username,
+			url: `https://github.com/${username}`,
+		},
+		blog: record.blog?.url
+			? {
+					name: record.blog.name?.trim() || nickname,
+					url: record.blog.url,
+				}
+			: null,
+		avatar: `https://github.com/${username}.png`,
+		profilePath: `/members/${username.toLowerCase()}`,
+	}
+}
+
+function readAlumni(): Alumni[] {
+	const alumniPath = findRepoFile('data/alumni.json')
+	if (!alumniPath) {
+		console.warn('Warning: data/alumni.json not found')
+		return []
+	}
+
+	try {
+		const data = JSON.parse(fs.readFileSync(alumniPath, 'utf-8'))
+		if (!Array.isArray(data)) {
+			console.error('Error reading data/alumni.json: expected an array')
+			return []
+		}
+
+		return data
+			.map(toAlumni)
+			.filter((person): person is Alumni => person !== null)
+	} catch (error) {
+		console.error('Error reading data/alumni.json:', error)
+		return []
+	}
+}
+
+function toProject(record: ProjectRecord): Project | null {
+	const name = record.name?.trim()
+	const url = record.url?.trim()
+	const description = record.description?.trim()
+
+	if (!name || !url || !description) {
+		return null
+	}
+
+	return {
+		name,
+		url,
+		description,
+		author: toProjectAuthor(record, url),
+		languages: toProjectLanguages(record.languages),
+		submittedAt: record.submittedAt?.trim() || null,
+	}
+}
+
+function readProjects(): Project[] {
+	const projectsPath = findRepoFile('data/projects.json')
+	if (!projectsPath) {
+		console.warn('Warning: data/projects.json not found')
+		return []
+	}
+
+	try {
+		const data = JSON.parse(fs.readFileSync(projectsPath, 'utf-8'))
+		if (!Array.isArray(data)) {
+			console.error('Error reading data/projects.json: expected an array')
+			return []
+		}
+
+		return data
+			.map(toProject)
+			.filter((project): project is Project => project !== null)
+			.sort((a, b) => {
+				const timeA = a.submittedAt ? Date.parse(a.submittedAt) : 0
+				const timeB = b.submittedAt ? Date.parse(b.submittedAt) : 0
+				return timeB - timeA
+			})
+	} catch (error) {
+		console.error('Error reading data/projects.json:', error)
+		return []
+	}
 }
 
 function readBlogPosts(): {
+	crawlWindowLabel: string
 	generatedAt: string | null
 	posts: BlogPost[]
 	sources: BlogSource[]
@@ -155,6 +294,7 @@ function readBlogPosts(): {
 
 	if (!postsPath) {
 		return {
+			crawlWindowLabel: `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`,
 			generatedAt: null,
 			posts: [],
 			sources: [],
@@ -162,8 +302,11 @@ function readBlogPosts(): {
 	}
 
 	try {
-		const parsed = JSON.parse(fs.readFileSync(postsPath, 'utf-8')) as BlogPostsFile
+		const parsed = JSON.parse(
+			fs.readFileSync(postsPath, 'utf-8'),
+		) as BlogPostsFile
 		return {
+			crawlWindowLabel: formatCrawlWindowLabel(parsed.crawl),
 			generatedAt: parsed.generatedAt ?? null,
 			posts: parsed.posts ?? [],
 			sources: parsed.sources ?? [],
@@ -171,6 +314,7 @@ function readBlogPosts(): {
 	} catch (error) {
 		console.error('Error reading data/blog-posts.json:', error)
 		return {
+			crawlWindowLabel: `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`,
 			generatedAt: null,
 			posts: [],
 			sources: [],
@@ -178,23 +322,22 @@ function readBlogPosts(): {
 	}
 }
 
-export function loadSiteData(options: LoadSiteDataOptions = {}) {
-	const readmePath = findRepoFile('README.md')
-
-	if (!readmePath) {
-		return {
-			projects: [],
-			alumni: [],
-			blogPosts: [],
-			blogPostCount: 0,
-			blogPostsGeneratedAt: null,
-			blogSources: [],
-		}
+function formatCrawlWindowLabel(crawl: BlogPostsFile['crawl']): string {
+	if (crawl?.recentYears && crawl.recentYears > 0) {
+		return `最近 ${crawl.recentYears} 年`
 	}
 
+	if (crawl?.minPostDate) {
+		return `${crawl.minPostDate.replaceAll('-', '.')} 以来`
+	}
+
+	return `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`
+}
+
+export function loadSiteData(options: LoadSiteDataOptions = {}) {
 	try {
-		const fileContent = fs.readFileSync(readmePath, 'utf-8')
-		const { projects, alumni } = parseReadme(fileContent)
+		const projects = readProjects()
+		const alumni = readAlumni()
 		const blogPosts = readBlogPosts()
 		const posts =
 			typeof options.postLimit === 'number'
@@ -206,6 +349,7 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 			alumni,
 			blogPosts: posts,
 			blogPostCount: blogPosts.posts.length,
+			blogCrawlWindowLabel: blogPosts.crawlWindowLabel,
 			blogPostsGeneratedAt: blogPosts.generatedAt,
 			blogSources: blogPosts.sources,
 		}
@@ -216,6 +360,7 @@ export function loadSiteData(options: LoadSiteDataOptions = {}) {
 			alumni: [],
 			blogPosts: [],
 			blogPostCount: 0,
+			blogCrawlWindowLabel: `最近 ${DEFAULT_BLOG_CRAWL_YEARS} 年`,
 			blogPostsGeneratedAt: null,
 			blogSources: [],
 		}

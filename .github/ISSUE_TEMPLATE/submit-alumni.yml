@@ -1,0 +1,41 @@
+name: 提交收录
+description: 提交 ZZULI.dev 名录信息
+title: "[收录] "
+labels: ["pending-review", "alumni-submission"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        填写会公开展示的信息即可，维护者审核后收录。已收录成员再次提交会更新资料；博客留空不会删除已有博客。
+
+  - type: input
+    id: nickname
+    attributes:
+      label: 昵称
+      description: 名录中的展示名
+      placeholder: 例如：Dogxi
+    validations:
+      required: true
+
+  - type: input
+    id: github
+    attributes:
+      label: GitHub 用户名
+      description: 不含 @ 或 URL
+      placeholder: 例如：dogxii
+    validations:
+      required: true
+
+  - type: input
+    id: blog_url
+    attributes:
+      label: 博客/主页（可选）
+      description: 留空则不展示
+      placeholder: 例如：https://blog.dogxi.me/
+
+  - type: input
+    id: blog_name
+    attributes:
+      label: 博客名称（可选）
+      description: 留空默认使用昵称
+      placeholder: 例如：狗窝子

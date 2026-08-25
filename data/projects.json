@@ -1,0 +1,46 @@
+[
+	{
+		"name": "Hello CTF - CTF 入门教程",
+		"url": "https://github.com/ProbiusOfficial/Hello-CTF",
+		"description": "免费开源的 CTF 入门教程，致力于 CTF 和网络安全的开源生态。",
+		"author": {
+			"name": "探姬",
+			"github": "ProbiusOfficial"
+		},
+		"languages": ["Other"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "DevBeginner Doc - 编程入门文档",
+		"url": "https://github.com/FrexCheat/DevBeginner-Doc",
+		"description": "面向编程初学者的帮助文档。",
+		"author": {
+			"name": "Frex",
+			"github": "FrexCheat"
+		},
+		"languages": ["Other"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "4-328 Learning In ZZULI - 大学学习记录",
+		"url": "https://github.com/huiyinian/4-328Learnging-InZzuli",
+		"description": "记录 2018 级物联网工程宿舍的大学学习历程。",
+		"author": {
+			"name": "huiyinian",
+			"github": "huiyinian"
+		},
+		"languages": ["Other"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "QFace - 面试题问答社区",
+		"url": "https://github.com/dogxii/qface",
+		"description": "程序员面试题学习与问答社区。",
+		"author": {
+			"name": "Dogxi",
+			"github": "dogxii"
+		},
+		"languages": ["TypeScript"],
+		"submittedAt": "2026-08-25"
+	}
+]

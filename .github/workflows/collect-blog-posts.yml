@@ -24,6 +24,9 @@ jobs:
       - name: Collect posts
         run: npm --prefix frontend run collect:posts
 
+      - name: Validate data
+        run: npm --prefix frontend run validate:data
+
       - name: Commit updated data
         run: |
           if git diff --quiet -- data/blog-posts.json; then

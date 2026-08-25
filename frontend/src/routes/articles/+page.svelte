@@ -3,12 +3,12 @@ import { onMount } from 'svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatPostDate } from '$lib/format'
 import {
-  getSavedThemeMode,
-  type ResolvedTheme,
-  resolveThemeMode,
-  saveThemeMode,
-  type ThemeMode,
-  watchSystemTheme,
+	getSavedThemeMode,
+	type ResolvedTheme,
+	resolveThemeMode,
+	saveThemeMode,
+	type ThemeMode,
+	watchSystemTheme,
 } from '$lib/theme'
 import type { PageData } from './$types'
 
@@ -18,149 +18,148 @@ let resolvedTheme = $state<ResolvedTheme>('light')
 let searchTerm = $state('')
 let groupBy = $state<'time' | 'author'>('time')
 let showCount = $state(50)
-let showAbout = $state(false)
-let loadMoreTrigger: HTMLDivElement
+let loadMoreTrigger = $state<HTMLDivElement | null>(null)
 let expandedAuthors = $state(new Set<string>())
 
 // Use a stable Map to avoid re-computation issues
 const alumniByName = $derived.by(() => {
-  const map = new Map<string, (typeof data.alumni)[0]>()
-  for (const person of data.alumni) {
-    map.set(person.nickname, person)
-  }
-  return map
+	const map = new Map<string, (typeof data.alumni)[0]>()
+	for (const person of data.alumni) {
+		map.set(person.nickname, person)
+	}
+	return map
 })
 
 const filteredPosts = $derived.by(() => {
-  if (!searchTerm.trim()) {
-    return data.blogPosts
-  }
-  const term = searchTerm.toLowerCase()
-  return data.blogPosts.filter(
-    (post) =>
-      post.title.toLowerCase().includes(term) ||
-      post.sourceName.toLowerCase().includes(term) ||
-      post.sourceSiteName?.toLowerCase().includes(term),
-  )
+	if (!searchTerm.trim()) {
+		return data.blogPosts
+	}
+	const term = searchTerm.toLowerCase()
+	return data.blogPosts.filter(
+		(post) =>
+			post.title.toLowerCase().includes(term) ||
+			post.sourceName.toLowerCase().includes(term) ||
+			post.sourceSiteName?.toLowerCase().includes(term),
+	)
 })
 
 // For time grouping: use pagination
 const displayedPosts = $derived(
-  groupBy === 'time' ? filteredPosts.slice(0, showCount) : filteredPosts,
+	groupBy === 'time' ? filteredPosts.slice(0, showCount) : filteredPosts,
 )
 const hasMore = $derived(groupBy === 'time' && filteredPosts.length > showCount)
 
 const groupedPosts = $derived.by(() => {
-  if (groupBy === 'author') {
-    const groups = new Map<string, typeof filteredPosts>()
-    for (const post of filteredPosts) {
-      const author = post.sourceName
-      if (!groups.has(author)) {
-        groups.set(author, [])
-      }
-      groups.get(author)!.push(post)
-    }
-    return Array.from(groups.entries())
-      .map(([author, posts]) => {
-        // Get the latest post date for this author
-        const latestDate = posts.reduce((latest, post) => {
-          if (!post.publishedAt) return latest
-          const date = new Date(post.publishedAt)
-          return date > latest ? date : latest
-        }, new Date(0))
-        return { label: author, posts, latestDate }
-      })
-      .sort((a, b) => b.latestDate.getTime() - a.latestDate.getTime())
-  } else {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const yesterday = new Date(today.getTime() - 86400000)
-    const thisWeek = new Date(today.getTime() - 7 * 86400000)
+	if (groupBy === 'author') {
+		const groups = new Map<string, typeof filteredPosts>()
+		for (const post of filteredPosts) {
+			const author = post.sourceName
+			if (!groups.has(author)) {
+				groups.set(author, [])
+			}
+			groups.get(author)!.push(post)
+		}
+		return Array.from(groups.entries())
+			.map(([author, posts]) => {
+				// Get the latest post date for this author
+				const latestDate = posts.reduce((latest, post) => {
+					if (!post.publishedAt) return latest
+					const date = new Date(post.publishedAt)
+					return date > latest ? date : latest
+				}, new Date(0))
+				return { label: author, posts, latestDate }
+			})
+			.sort((a, b) => b.latestDate.getTime() - a.latestDate.getTime())
+	} else {
+		const now = new Date()
+		const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+		const yesterday = new Date(today.getTime() - 86400000)
+		const thisWeek = new Date(today.getTime() - 7 * 86400000)
 
-    const groups = {
-      今天: [] as typeof filteredPosts,
-      昨天: [] as typeof filteredPosts,
-      本周: [] as typeof filteredPosts,
-      更早: [] as typeof filteredPosts,
-    }
+		const groups = {
+			今天: [] as typeof filteredPosts,
+			昨天: [] as typeof filteredPosts,
+			本周: [] as typeof filteredPosts,
+			更早: [] as typeof filteredPosts,
+		}
 
-    for (const post of displayedPosts) {
-      const date = post.publishedAt ? new Date(post.publishedAt) : null
-      if (!date) {
-        groups['更早'].push(post)
-      } else if (date >= today) {
-        groups['今天'].push(post)
-      } else if (date >= yesterday) {
-        groups['昨天'].push(post)
-      } else if (date >= thisWeek) {
-        groups['本周'].push(post)
-      } else {
-        groups['更早'].push(post)
-      }
-    }
+		for (const post of displayedPosts) {
+			const date = post.publishedAt ? new Date(post.publishedAt) : null
+			if (!date) {
+				groups['更早'].push(post)
+			} else if (date >= today) {
+				groups['今天'].push(post)
+			} else if (date >= yesterday) {
+				groups['昨天'].push(post)
+			} else if (date >= thisWeek) {
+				groups['本周'].push(post)
+			} else {
+				groups['更早'].push(post)
+			}
+		}
 
-    return Object.entries(groups)
-      .filter(([_, posts]) => posts.length > 0)
-      .map(([label, posts]) => ({ label, posts }))
-  }
+		return Object.entries(groups)
+			.filter(([_, posts]) => posts.length > 0)
+			.map(([label, posts]) => ({ label, posts }))
+	}
 })
 
 $effect(() => {
-  // Reset scroll count when search term or group changes
-  searchTerm
-  groupBy
-  showCount = 50
-  expandedAuthors = new Set()
+	// Reset scroll count when search term or group changes
+	searchTerm
+	groupBy
+	showCount = 50
+	expandedAuthors = new Set()
 })
 
 onMount(() => {
-  themeMode = getSavedThemeMode()
-  resolvedTheme = resolveThemeMode(themeMode)
+	themeMode = getSavedThemeMode()
+	resolvedTheme = resolveThemeMode(themeMode)
 
-  const unwatch = watchSystemTheme((systemTheme) => {
-    if (themeMode === 'auto') {
-      resolvedTheme = systemTheme
-    }
-  })
+	const unwatch = watchSystemTheme((systemTheme) => {
+		if (themeMode === 'auto') {
+			resolvedTheme = systemTheme
+		}
+	})
 
-  // Intersection Observer for infinite scroll
-  const observer = new IntersectionObserver(
-    (entries) => {
-      if (entries[0].isIntersecting && hasMore) {
-        showCount += 50
-      }
-    },
-    { rootMargin: '200px' },
-  )
+	// Intersection Observer for infinite scroll
+	const observer = new IntersectionObserver(
+		(entries) => {
+			if (entries[0].isIntersecting && hasMore) {
+				showCount += 50
+			}
+		},
+		{ rootMargin: '200px' },
+	)
 
-  if (loadMoreTrigger) {
-    observer.observe(loadMoreTrigger)
-  }
+	if (loadMoreTrigger) {
+		observer.observe(loadMoreTrigger)
+	}
 
-  return () => {
-    unwatch()
-    observer.disconnect()
-  }
+	return () => {
+		unwatch()
+		observer.disconnect()
+	}
 })
 
 function setThemeMode(mode: ThemeMode) {
-  themeMode = mode
-  resolvedTheme = resolveThemeMode(mode)
-  saveThemeMode(mode)
+	themeMode = mode
+	resolvedTheme = resolveThemeMode(mode)
+	saveThemeMode(mode)
 }
 
 function getPostAvatar(sourceName: string): string | null {
-  return alumniByName.get(sourceName)?.avatar ?? null
+	return alumniByName.get(sourceName)?.avatar ?? null
 }
 
 function toggleAuthor(author: string) {
-  const newSet = new Set(expandedAuthors)
-  if (newSet.has(author)) {
-    newSet.delete(author)
-  } else {
-    newSet.add(author)
-  }
-  expandedAuthors = newSet
+	const newSet = new Set(expandedAuthors)
+	if (newSet.has(author)) {
+		newSet.delete(author)
+	} else {
+		newSet.add(author)
+	}
+	expandedAuthors = newSet
 }
 
 const INITIAL_AUTHOR_POSTS = 5
@@ -175,10 +174,9 @@ const INITIAL_AUTHOR_POSTS = 5
 	class="min-h-screen bg-[#f3f5f7] text-[#202124] selection:bg-[#7dd3fc]/30 dark:bg-[#111418] dark:text-[#e8eaed]"
 >
 	<SiteHeader
-		onAbout={() => (showAbout = true)}
 		onThemeModeChange={setThemeMode}
 		{resolvedTheme}
-		showHomeLink
+		showProjectsLink
 		subtitle="开发者社区"
 		{themeMode}
 	/>
@@ -318,65 +316,4 @@ const INITIAL_AUTHOR_POSTS = 5
 		</section>
 	</main>
 
-	{#if showAbout}
-		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/35 px-4 py-6 backdrop-blur-sm dark:bg-black/55"
-		>
-			<button
-				type="button"
-				class="absolute inset-0 cursor-default"
-				aria-label="关闭关于弹窗"
-				onclick={() => (showAbout = false)}
-			></button>
-			<div
-				class="relative z-10 w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-[#15191f]"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="about-title"
-				tabindex="-1"
-			>
-				<div class="flex items-start justify-between gap-4">
-					<div>
-						<h2 id="about-title" class="text-lg font-semibold">关于 ZZULI.dev</h2>
-						<p class="mt-1 text-sm text-[#6b7280] dark:text-[#9aa4b2]">
-							ZZULI 开发者的成员和博客文章索引。
-						</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => (showAbout = false)}
-						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#eef2f7] dark:hover:bg-[#202631]"
-						aria-label="关闭关于弹窗"
-					>
-						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-						</svg>
-					</button>
-				</div>
-
-				<div class="mt-5 space-y-3 text-sm">
-					<a
-						href="https://github.com/dogxii/zzuli-developers"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center justify-between rounded-xl bg-[#f3f5f7] px-4 py-3 hover:bg-[#e9eef5] dark:bg-[#202631] dark:hover:bg-[#2a3340]"
-					>
-						<span>GitHub 仓库</span>
-						<span class="text-[#1d4ed8] dark:text-[#80bfff]">dogxii/zzuli-developers</span>
-					</a>
-					<a
-						href="mailto:hi@dogxi.me"
-						class="flex items-center justify-between rounded-xl bg-[#f3f5f7] px-4 py-3 hover:bg-[#e9eef5] dark:bg-[#202631] dark:hover:bg-[#2a3340]"
-					>
-						<span>联系邮箱</span>
-						<span class="text-[#1d4ed8] dark:text-[#80bfff]">hi@dogxi.me</span>
-					</a>
-				</div>
-
-				<p class="mt-5 text-sm leading-6 text-[#6b7280] dark:text-[#9aa4b2]">
-					想加入可以直接提交 PR 修改 README，也可以在 GitHub 提 Issue。文章数据由定时脚本从成员博客抓取标题和链接。
-				</p>
-			</div>
-		</div>
-	{/if}
 </div>

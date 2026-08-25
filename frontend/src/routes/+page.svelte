@@ -1,126 +1,147 @@
 <script lang="ts">
-	import SiteHeader from '$lib/components/SiteHeader.svelte'
-	import { formatGeneratedAt, formatPostDate } from '$lib/format'
-	import {
-		getSavedThemeMode,
-		resolveThemeMode,
-		saveThemeMode,
-		watchSystemTheme,
-		type ResolvedTheme,
-		type ThemeMode,
-	} from '$lib/theme'
-	import { onMount } from 'svelte'
-	import type { PageData } from './$types'
+import { onMount } from 'svelte'
+import SiteHeader from '$lib/components/SiteHeader.svelte'
+import { formatGeneratedAt, formatPostDate } from '$lib/format'
+import {
+	getSavedThemeMode,
+	type ResolvedTheme,
+	resolveThemeMode,
+	saveThemeMode,
+	type ThemeMode,
+	watchSystemTheme,
+} from '$lib/theme'
+import type { PageData } from './$types'
 
-	const HOME_POST_LIMIT = 18
-	const SIDEBAR_MEMBER_LIMIT = 20
+const HOME_POST_LIMIT = 18
+const HOME_PROJECT_LIMIT = 5
+const SIDEBAR_MEMBER_COLUMNS = 7
+const SIDEBAR_MEMBER_ROWS = 4
+const SIDEBAR_MEMBER_SLOTS = SIDEBAR_MEMBER_COLUMNS * SIDEBAR_MEMBER_ROWS
 
-	let { data }: { data: PageData } = $props()
+let { data }: { data: PageData } = $props()
 
-	let themeMode = $state<ThemeMode>('auto')
-	let resolvedTheme = $state<ResolvedTheme>('light')
-	let searchTerm = $state('')
-	let showAbout = $state(false)
-	let memberSample = $state<PageData['alumni']>([])
-	let memberOrder = $state<PageData['alumni']>([])
+let themeMode = $state<ThemeMode>('auto')
+let resolvedTheme = $state<ResolvedTheme>('light')
+let searchTerm = $state('')
+let memberSample = $state<PageData['alumni']>([])
+let memberOrder = $state<PageData['alumni']>([])
+let projectSample = $state<PageData['projects']>([])
 
-	let totalAlumni = $derived(data.alumni.length)
-	let totalProjects = $derived(data.projects.length)
-	let totalBlogs = $derived(data.alumni.filter((person) => person.blog?.url).length)
-	let healthyBlogSources = $derived(
-		data.blogSources?.filter((source) => source.status === 'ok').length ?? 0,
-	)
-	let normalizedSearch = $derived(searchTerm.trim().toLowerCase())
-	let orderedAlumni = $derived(memberOrder.length > 0 ? memberOrder : data.alumni)
-	let filteredAlumni = $derived(
-		orderedAlumni.filter((person) => {
-			if (!normalizedSearch) return true
+let totalAlumni = $derived(data.alumni.length)
+let totalProjects = $derived(data.projects.length)
+let totalBlogs = $derived(
+	data.alumni.filter((person) => person.blog?.url).length,
+)
+let sourceHelpText = $derived(`爬取${data.blogCrawlWindowLabel}的文章`)
+let normalizedSearch = $derived(searchTerm.trim().toLowerCase())
+let orderedAlumni = $derived(memberOrder.length > 0 ? memberOrder : data.alumni)
+let filteredAlumni = $derived(
+	orderedAlumni.filter((person) => {
+		if (!normalizedSearch) return true
 
-			return [
-				person.nickname,
-				person.github?.text,
-				person.github?.url,
-				person.blog?.text,
-				person.blog?.url,
-			]
-				.filter(Boolean)
-				.some((value) => value?.toLowerCase().includes(normalizedSearch))
-		}),
-	)
-	let homePosts = $derived(data.blogPosts)
-	let hasMorePosts = $derived(data.blogPostCount > HOME_POST_LIMIT)
-	let avatarMembers = $derived(data.alumni.filter((person) => person.avatar))
-	let featuredMembers = $derived(
-		memberSample.length > 0
-			? memberSample
-			: avatarMembers.slice(0, SIDEBAR_MEMBER_LIMIT),
-	)
-	let hiddenMemberCount = $derived(Math.max(0, avatarMembers.length - featuredMembers.length))
-	let alumniByName = $derived(new Map(data.alumni.map((person) => [person.nickname, person])))
-	let visibleSources = $derived((data.blogSources ?? []).slice(0, 50))
+		return [
+			person.nickname,
+			person.github.username,
+			person.github.url,
+			person.blog?.name,
+			person.blog?.url,
+		]
+			.filter(Boolean)
+			.some((value) => value?.toLowerCase().includes(normalizedSearch))
+	}),
+)
+let homePosts = $derived(data.blogPosts)
+let hasMorePosts = $derived(data.blogPostCount > HOME_POST_LIMIT)
+let featuredProjects = $derived(
+	projectSample.length > 0
+		? projectSample
+		: data.projects.slice(0, HOME_PROJECT_LIMIT),
+)
+let avatarMembers = $derived(data.alumni.filter((person) => person.avatar))
+let sidebarMemberLimit = $derived(
+	avatarMembers.length > SIDEBAR_MEMBER_SLOTS
+		? SIDEBAR_MEMBER_SLOTS - 1
+		: SIDEBAR_MEMBER_SLOTS,
+)
+let featuredMembers = $derived(
+	memberSample.length > 0
+		? memberSample
+		: avatarMembers.slice(0, sidebarMemberLimit),
+)
+let hiddenMemberCount = $derived(
+	Math.max(0, avatarMembers.length - featuredMembers.length),
+)
+let alumniByName = $derived(
+	new Map(data.alumni.map((person) => [person.nickname, person])),
+)
+let visibleSources = $derived((data.blogSources ?? []).slice(0, 50))
 
-	onMount(() => {
-		themeMode = getSavedThemeMode()
-		resolvedTheme = resolveThemeMode(themeMode)
-		memberSample = shuffleMembers(avatarMembers).slice(0, SIDEBAR_MEMBER_LIMIT)
+onMount(() => {
+	themeMode = getSavedThemeMode()
+	resolvedTheme = resolveThemeMode(themeMode)
+	memberSample = shuffleMembers(avatarMembers).slice(0, sidebarMemberLimit)
+	randomizeProjects()
 
-		return watchSystemTheme((systemTheme) => {
-			if (themeMode === 'auto') {
-				resolvedTheme = systemTheme
-			}
-		})
+	return watchSystemTheme((systemTheme) => {
+		if (themeMode === 'auto') {
+			resolvedTheme = systemTheme
+		}
 	})
+})
 
-	function shuffleMembers(members: PageData['alumni']) {
-		const shuffled = [...members]
+function shuffleMembers(members: PageData['alumni']) {
+	return shuffleItems(members)
+}
 
-		for (let index = shuffled.length - 1; index > 0; index -= 1) {
-			const swapIndex = Math.floor(Math.random() * (index + 1))
-			;[shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]]
-		}
+function shuffleItems<T>(items: T[]) {
+	const shuffled = [...items]
 
-		return shuffled
+	for (let index = shuffled.length - 1; index > 0; index -= 1) {
+		const swapIndex = Math.floor(Math.random() * (index + 1))
+		;[shuffled[index], shuffled[swapIndex]] = [
+			shuffled[swapIndex],
+			shuffled[index],
+		]
 	}
 
-	function shuffleMemberList() {
-		memberOrder = shuffleMembers(data.alumni)
-	}
+	return shuffled
+}
 
-	function setThemeMode(mode: ThemeMode) {
-		themeMode = mode
-		resolvedTheme = resolveThemeMode(mode)
-		saveThemeMode(mode)
-	}
+function shuffleMemberList() {
+	memberOrder = shuffleMembers(data.alumni)
+}
 
-	function closeAboutOnEscape(event: KeyboardEvent) {
-		if (event.key === 'Escape') {
-			showAbout = false
-		}
-	}
+function randomizeProjects() {
+	projectSample = shuffleItems(data.projects).slice(0, HOME_PROJECT_LIMIT)
+}
 
-	function getPostAvatar(sourceName: string): string | null {
-		return alumniByName.get(sourceName)?.avatar ?? null
-	}
+function setThemeMode(mode: ThemeMode) {
+	themeMode = mode
+	resolvedTheme = resolveThemeMode(mode)
+	saveThemeMode(mode)
+}
 
-	function sourceStatusLabel(status: string): string {
-		switch (status) {
-			case 'ok':
-				return '正常'
-			case 'empty':
-				return '未发现'
-			case 'error':
-				return '失败'
-			default:
-				return status
-		}
+function getPostAvatar(sourceName: string): string | null {
+	return alumniByName.get(sourceName)?.avatar ?? null
+}
+
+function sourceStatusLabel(status: string): string {
+	switch (status) {
+		case 'ok':
+			return '正常'
+		case 'empty':
+			return '未发现'
+		case 'error':
+			return '失败'
+		default:
+			return status
 	}
+}
 </script>
 
 <svelte:head>
 	<title>ZZULI.dev | 开发者社区</title>
 </svelte:head>
-
-<svelte:window onkeydown={closeAboutOnEscape} />
 
 <div
 	class:dark={resolvedTheme === 'dark'}
@@ -129,10 +150,10 @@
 	<SiteHeader
 		brandAriaLabel="回到文章列表"
 		brandHref="#feed"
-		onAbout={() => (showAbout = true)}
 		onThemeModeChange={setThemeMode}
 		{resolvedTheme}
 		showArticlesLink
+		showProjectsLink
 		subtitle="开发者社区"
 		{themeMode}
 	/>
@@ -147,7 +168,7 @@
 					</span>
 				</div>
 				<a
-					href="https://github.com/dogxii/zzuli-developers"
+					href="https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-alumni.yml"
 					target="_blank"
 					rel="noopener noreferrer"
 					class="shrink-0 rounded-full bg-[#eef6ff] px-3 py-1 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
@@ -226,9 +247,49 @@
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">项目</p>
 					</div>
 					<div>
-						<p class="text-xl font-semibold">{healthyBlogSources}/{totalBlogs}</p>
+						<p class="text-xl font-semibold">{totalBlogs}</p>
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章源</p>
 					</div>
+				</div>
+			</section>
+
+			<section class="rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+				<div>
+					<a
+						href="https://github.com/dogxii/ZZULI.dev"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-3 px-4 py-3 hover:bg-[#f8fafc] dark:hover:bg-[#1b2129]"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+						<svg class="h-7 w-7" fill="currentColor" fill-rule="evenodd" height="1em" style="flex:none;line-height:1" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><title>Github</title><path d="M12 0c6.63 0 12 5.276 12 11.79-.001 5.067-3.29 9.567-8.175 11.187-.6.118-.825-.25-.825-.56 0-.398.015-1.665.015-3.242 0-1.105-.375-1.813-.81-2.181 2.67-.295 5.475-1.297 5.475-5.822 0-1.297-.465-2.344-1.23-3.169.12-.295.54-1.503-.12-3.125 0 0-1.005-.324-3.3 1.209a11.32 11.32 0 00-3-.398c-1.02 0-2.04.133-3 .398-2.295-1.518-3.3-1.209-3.3-1.209-.66 1.622-.24 2.83-.12 3.125-.765.825-1.23 1.887-1.23 3.169 0 4.51 2.79 5.527 5.46 5.822-.345.294-.66.81-.765 1.577-.69.31-2.415.81-3.495-.973-.225-.354-.9-1.223-1.845-1.209-1.005.015-.405.56.015.781.51.28 1.095 1.327 1.23 1.666.24.663 1.02 1.93 4.035 1.385 0 .988.015 1.916.015 2.196 0 .31-.225.664-.825.56C3.303 21.374-.003 16.867 0 11.791 0 5.276 5.37 0 12 0z"></path></svg>
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-medium">GitHub 仓库</p>
+							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">dogxii/ZZULI.dev</p>
+						</div>
+						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
+							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
+						</svg>
+					</a>
+
+					<a
+						href="https://qm.qq.com/cgi-bin/qm/qr?k=1q3IN4-zn7JIQYdtBIIMF3N4otjgqB51&jump_from=webapi&authKey=nrhi6CY7BcXgEPiTqrs5+5NFX7um+Z9GKJbERupRl1XWfEPWiSm3abjXf/W4/3g9"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex items-center gap-3 px-4 py-3 hover:bg-[#f8fafc] dark:hover:bg-[#1b2129]"
+					>
+						<div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full">
+							<img src="https://wiki.connect.qq.com/wp-content/uploads/2013/10/03_qq_symbol-1-768x921.png" alt="QQ" class="h-8 w-7" />
+						</div>
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-medium">QQ 交流群</p>
+							<p class="text-xs text-[#6b7280] dark:text-[#9aa4b2]">733107768</p>
+						</div>
+						<svg class="h-4 w-4 text-[#6b7280] dark:text-[#9aa4b2]" viewBox="0 0 16 16" fill="currentColor">
+							<path d="M6.22 3.22a.75.75 0 0 1 1.06 0l4.25 4.25a.75.75 0 0 1 0 1.06l-4.25 4.25a.75.75 0 0 1-1.06-1.06L9.94 8 6.22 4.28a.75.75 0 0 1 0-1.06Z"></path>
+						</svg>
+					</a>
 				</div>
 			</section>
 
@@ -236,23 +297,78 @@
 				id="projects"
 				class="rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
 			>
-				<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-					<h2 class="text-sm font-semibold">项目</h2>
+				<div class="flex items-center justify-between gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+					<div class="min-w-0">
+						<h2 class="text-sm font-semibold">项目</h2>
+					</div>
+					<div class="flex shrink-0 items-center gap-1">
+						<button
+							type="button"
+							onclick={randomizeProjects}
+							class="flex h-8 w-8 items-center justify-center rounded-full text-[#6b7280] hover:bg-[#eef2f7] dark:text-[#9aa4b2] dark:hover:bg-[#202631]"
+							aria-label="换一批项目"
+							title="换一批项目"
+						>
+							<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path d="M3 12a9 9 0 0 1 9-9 9.8 9.8 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+								<path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+								<path d="M21 12a9 9 0 0 1-9 9 9.8 9.8 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+								<path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							</svg>
+						</button>
+					</div>
 				</div>
 				<div>
-					{#each data.projects as project}
+					{#each featuredProjects as project}
 						<a
 							href={project.url}
 							target="_blank"
 							rel="noopener noreferrer"
-							class="block px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.07)] last:shadow-none hover:bg-[#f8fafc] dark:shadow-[0_1px_0_rgba(255,255,255,0.07)] dark:hover:bg-[#1b2129]"
+							class="flex gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.07)] last:shadow-none hover:bg-[#f8fafc] dark:shadow-[0_1px_0_rgba(255,255,255,0.07)] dark:hover:bg-[#1b2129]"
 						>
-							<p class="line-clamp-1 text-sm font-semibold text-[#1d4ed8] dark:text-[#80bfff]">{project.name}</p>
-							<p class="mt-1 line-clamp-2 text-xs leading-5 text-[#6b7280] dark:text-[#9aa4b2]">
-								{project.description}
-							</p>
+							{#if project.author.avatar}
+								<img
+									src={project.author.avatar}
+									alt={project.author.name}
+									class="mt-0.5 h-9 w-9 shrink-0 rounded-full bg-[#eef2f7] object-cover dark:bg-[#202631]"
+									loading="lazy"
+									decoding="async"
+									referrerpolicy="no-referrer"
+								/>
+							{:else}
+								<div class="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#eef2f7] text-xs font-semibold text-[#6b7280] dark:bg-[#202631] dark:text-[#9aa4b2]">
+									{project.author.name.charAt(0).toUpperCase()}
+								</div>
+							{/if}
+							<div class="min-w-0 flex-1">
+								<p class="line-clamp-1 text-sm font-semibold text-[#1d4ed8] dark:text-[#80bfff]">{project.name}</p>
+								<p class="mt-1 line-clamp-2 text-xs leading-5 text-[#6b7280] dark:text-[#9aa4b2]">
+									{project.description}
+								</p>
+								<div class="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-[#6b7280] dark:text-[#9aa4b2]">
+									<span>{project.author.github ? `@${project.author.github}` : project.author.name}</span>
+									{#each project.languages.slice(0, 2) as language}
+										<span aria-hidden="true">·</span>
+										<span class="inline-flex items-center gap-1">
+											<span
+												class="h-2 w-2 rounded-full"
+												style={`background-color: ${language.color};`}
+											></span>
+											{language.name}
+										</span>
+									{/each}
+								</div>
+							</div>
 						</a>
 					{/each}
+				</div>
+				<div class="px-4 py-3 text-center shadow-[0_-1px_0_rgba(31,35,40,0.07)] dark:shadow-[0_-1px_0_rgba(255,255,255,0.07)]">
+					<a
+						href="/projects"
+						class="inline-flex items-center rounded-full px-3 py-1.5 text-sm font-medium text-[#0969da] hover:bg-[#eef6ff] dark:text-[#7cc4ff] dark:hover:bg-[#10233a]"
+					>
+						查看更多项目
+					</a>
 				</div>
 			</section>
 
@@ -261,9 +377,7 @@
 				<div class="mt-3 grid grid-cols-7 gap-2">
 					{#each featuredMembers as person}
 						<a
-							href={person.github.url}
-							target="_blank"
-							rel="noopener noreferrer"
+							href={person.profilePath}
 							title={person.nickname}
 							class="rounded-xl hover:ring-2 hover:ring-[#7dd3fc]/60"
 						>
@@ -282,7 +396,7 @@
 							href="#members"
 							title={`还有 ${hiddenMemberCount} 位成员`}
 							aria-label={`还有 ${hiddenMemberCount} 位成员`}
-							class="flex h-9 w-9 items-center justify-center rounded-xl bg-[#f3f5f7] text-lg font-semibold leading-none text-[#6b7280] hover:bg-[#e5eaf0] dark:bg-[#202631] dark:text-[#9aa4b2] dark:hover:bg-[#2a3340]"
+							class="flex h-9 w-9 place-self-center items-center justify-center rounded-xl bg-[#f3f5f7] text-lg font-semibold leading-none text-[#6b7280] hover:bg-[#e5eaf0] dark:bg-[#202631] dark:text-[#9aa4b2] dark:hover:bg-[#2a3340]"
 						>
 							…
 						</a>
@@ -298,7 +412,6 @@
 			<div class="flex flex-col gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] sm:flex-row sm:items-center sm:justify-between dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 				<div>
 					<h2 class="text-sm font-semibold">成员</h2>
-					<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">{filteredAlumni.length}/{totalAlumni}</p>
 				</div>
 				<div class="flex w-full gap-2 sm:w-auto">
 					<label class="block min-w-0 flex-1 sm:w-80">
@@ -318,7 +431,10 @@
 						title="随机成员排序"
 					>
 						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="M16 3h5v5M4 20h2.5c2.5 0 4.1-1.1 5.5-3l1.4-2M4 4h2.5c2.5 0 4.1 1.1 5.5 3l4 6c1.4 1.9 3 3 5.5 3H22M16 21h5v-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M3 12a9 9 0 0 1 9-9 9.8 9.8 0 0 1 6.74 2.74L21 8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M21 3v5h-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M21 12a9 9 0 0 1-9 9 9.8 9.8 0 0 1-6.74-2.74L3 16" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M8 16H3v5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
 						</svg>
 					</button>
 				</div>
@@ -327,7 +443,10 @@
 			<div class="grid sm:grid-cols-2 lg:grid-cols-3">
 				{#each filteredAlumni as person}
 					<article class="px-4 py-3 shadow-[1px_1px_0_rgba(31,35,40,0.07)] dark:shadow-[1px_1px_0_rgba(255,255,255,0.07)]">
-						<div class="flex items-center gap-3">
+						<a
+							href={person.profilePath}
+							class="flex items-center gap-3 rounded-xl hover:text-[#0969da] dark:hover:text-[#7cc4ff]"
+						>
 							{#if person.avatar}
 								<img
 									src={person.avatar}
@@ -345,12 +464,12 @@
 
 							<div class="min-w-0 flex-1">
 								<h3 class="truncate text-sm font-semibold">{person.nickname}</h3>
-								<p class="truncate text-xs text-[#6b7280] dark:text-[#9aa4b2]">{person.github.text}</p>
+								<p class="truncate text-xs text-[#6b7280] dark:text-[#9aa4b2]">@{person.github.username}</p>
 							</div>
-						</div>
+						</a>
 
 						<div class="mt-3 flex gap-2">
-							{#if person.github?.url}
+							{#if person.github.url}
 								<a
 									href={person.github.url}
 									target="_blank"
@@ -365,9 +484,10 @@
 									href={person.blog.url}
 									target="_blank"
 									rel="noopener noreferrer"
-									class="rounded-full bg-[#eef6ff] px-2.5 py-1 text-xs text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
+									title={person.blog.name}
+									class="max-w-36 truncate rounded-full bg-[#eef6ff] px-2.5 py-1 text-xs text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
 								>
-									博客
+									{person.blog.name}
 								</a>
 							{/if}
 						</div>
@@ -381,7 +501,24 @@
 			class="min-w-0 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:col-span-2 dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
 		>
 			<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-				<h2 class="text-sm font-semibold">文章来源</h2>
+				<div class="flex items-center gap-1.5">
+					<h2 class="text-sm font-semibold">文章来源</h2>
+					<button
+						type="button"
+						class="group relative z-30 flex h-6 w-6 shrink-0 cursor-help items-center justify-center rounded-full text-[#6b7280] outline-none hover:bg-[#eef2f7] dark:text-[#9aa4b2] dark:hover:bg-[#202631]"
+						aria-label={sourceHelpText}
+						title={sourceHelpText}
+					>
+						<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+							<path d="M9.09 9a3 3 0 0 1 5.82 1c0 2-3 3-3 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+							<path d="M12 17h.01" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" />
+						</svg>
+						<span class="pointer-events-none absolute left-7 top-1/2 z-50 w-max max-w-64 -translate-y-1/2 rounded-lg bg-[#24292f] px-3 py-2 text-xs font-medium text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 group-focus:opacity-100 dark:bg-[#30363d]">
+							{sourceHelpText}
+						</span>
+					</button>
+				</div>
 			</div>
 			<div class="grid sm:grid-cols-2 lg:grid-cols-5">
 				{#each visibleSources as source}
@@ -401,65 +538,4 @@
 		</section>
 	</main>
 
-	{#if showAbout}
-		<div
-			class="fixed inset-0 z-50 flex items-center justify-center bg-[#0f172a]/35 px-4 py-6 backdrop-blur-sm dark:bg-black/55"
-		>
-			<button
-				type="button"
-				class="absolute inset-0 cursor-default"
-				aria-label="关闭关于弹窗"
-				onclick={() => (showAbout = false)}
-			></button>
-			<div
-				class="relative z-10 w-full max-w-md rounded-2xl bg-white p-5 shadow-xl dark:bg-[#15191f]"
-				role="dialog"
-				aria-modal="true"
-				aria-labelledby="about-title"
-				tabindex="-1"
-			>
-				<div class="flex items-start justify-between gap-4">
-					<div>
-						<h2 id="about-title" class="text-lg font-semibold">关于 ZZULI.dev</h2>
-						<p class="mt-1 text-sm text-[#6b7280] dark:text-[#9aa4b2]">
-							ZZULI 开发者的成员和博客文章索引。
-						</p>
-					</div>
-					<button
-						type="button"
-						onclick={() => (showAbout = false)}
-						class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full hover:bg-[#eef2f7] dark:hover:bg-[#202631]"
-						aria-label="关闭关于弹窗"
-					>
-						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-							<path d="m6 6 12 12M18 6 6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
-						</svg>
-					</button>
-				</div>
-
-				<div class="mt-5 space-y-3 text-sm">
-					<a
-						href="https://github.com/dogxii/zzuli-developers"
-						target="_blank"
-						rel="noopener noreferrer"
-						class="flex items-center justify-between rounded-xl bg-[#f3f5f7] px-4 py-3 hover:bg-[#e9eef5] dark:bg-[#202631] dark:hover:bg-[#2a3340]"
-					>
-						<span>GitHub 仓库</span>
-						<span class="text-[#1d4ed8] dark:text-[#80bfff]">dogxii/zzuli-developers</span>
-					</a>
-					<a
-						href="mailto:hi@dogxi.me"
-						class="flex items-center justify-between rounded-xl bg-[#f3f5f7] px-4 py-3 hover:bg-[#e9eef5] dark:bg-[#202631] dark:hover:bg-[#2a3340]"
-					>
-						<span>联系邮箱</span>
-						<span class="text-[#1d4ed8] dark:text-[#80bfff]">hi@dogxi.me</span>
-					</a>
-				</div>
-
-				<p class="mt-5 text-sm leading-6 text-[#6b7280] dark:text-[#9aa4b2]">
-					想加入可以直接提交 PR 修改 README，也可以在 GitHub 提 Issue。文章数据由定时脚本从成员博客抓取标题和链接。
-				</p>
-			</div>
-		</div>
-	{/if}
 </div>

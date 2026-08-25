@@ -7,6 +7,8 @@
 	"scripts": {
 		"dev": "vite dev",
 		"collect:posts": "node ../scripts/collect-blog-posts.mjs",
+		"generate:readme": "node ../scripts/generate-readme.mjs",
+		"validate:data": "node ../scripts/validate-data.mjs",
 		"build": "vite build",
 		"preview": "vite preview",
 		"prepare": "svelte-kit sync || echo ''",
