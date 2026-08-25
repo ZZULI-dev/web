@@ -2,6 +2,17 @@
 
 ZZULI.dev 是静态站点，推荐部署到 Cloudflare Pages。
 
+## Cloudflare Pages
+
+推荐使用 Pages 的 Git 集成，不需要在仓库里配置部署 Token。Cloudflare 连接 GitHub 仓库后，按下面配置即可：
+
+- Root directory：`frontend`
+- Build command：`npm run build`
+- Build output directory：`build`
+- Environment variables：`NODE_VERSION=22`
+
+如果使用 Wrangler 直接上传构建产物，才需要额外准备 `CLOUDFLARE_ACCOUNT_ID` 和可部署 Pages 的 `CLOUDFLARE_API_TOKEN`，然后上传 `frontend/build`。
+
 ## 域名
 
 - 主域名：`https://zzuli.dev`
@@ -39,11 +50,13 @@ Cloudflare 访问统计接入：
 本地测试：
 
 ```bash
-CLOUDFLARE_API_TOKEN=xxx \
-CLOUDFLARE_ZONE_TAG=xxx \
-SITE_STATS_HOSTNAME=zzuli.dev \
+set -a
+source .env
+set +a
 npm --prefix frontend run collect:site-stats
 ```
+
+本地 `.env` 只用于你自己运行采集脚本，不要提交。仓库提供了 `.env.example` 作为模板；前端页面构建不需要这些 Token。
 
 站点统计默认读取最近 30 天 Cloudflare zone 日统计：
 

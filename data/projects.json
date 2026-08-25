@@ -1,5 +1,71 @@
 [
 	{
+		"name": "SecToolKit - 网络安全工具索引",
+		"url": "https://github.com/ProbiusOfficial/SecToolKit",
+		"description": "收录 CTF 和网络安全常用工具及文档的开源知识库。",
+		"author": {
+			"name": "探姬",
+			"github": "ProbiusOfficial"
+		},
+		"languages": ["Other"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "CTF-OS - CTF 比赛虚拟机",
+		"url": "https://github.com/ProbiusOfficial/CTF-OS",
+		"description": "为 CTF 比赛封装的开箱即用虚拟机环境。",
+		"author": {
+			"name": "探姬",
+			"github": "ProbiusOfficial"
+		},
+		"languages": ["Other"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "Diarum - 自托管日记应用",
+		"url": "https://github.com/songtianlun/diarum",
+		"description": "简洁优雅的自托管日记应用。",
+		"author": {
+			"name": "TianLun Song",
+			"github": "songtianlun"
+		},
+		"languages": ["Go"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "iFace - 智能面试题库",
+		"url": "https://github.com/dogxii/iFace",
+		"description": "面向 Agent、前端、Golang 和 Java 的智能刷题工具。",
+		"author": {
+			"name": "Dogxi",
+			"github": "dogxii"
+		},
+		"languages": ["TypeScript"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "AI Data Access Gateway - AI 数据访问网关",
+		"url": "https://github.com/HanZephyr/AI-Data-Access-Gateway",
+		"description": "通过 MCP 协议为 AI Agent 提供数据库安全访问服务。",
+		"author": {
+			"name": "冬酒暖阳",
+			"github": "HanZephyr"
+		},
+		"languages": ["Python"],
+		"submittedAt": "2026-08-25"
+	},
+	{
+		"name": "DocVision - AI 文档解析管线",
+		"url": "https://github.com/LingNc/DocVision",
+		"description": "将 PDF 拆分、解析并转换为适合 AI 读取的 Markdown 文档。",
+		"author": {
+			"name": "绫袅LingNc",
+			"github": "LingNc"
+		},
+		"languages": ["Go"],
+		"submittedAt": "2026-08-25"
+	},
+	{
 		"name": "Hello CTF - CTF 入门教程",
 		"url": "https://github.com/ProbiusOfficial/Hello-CTF",
 		"description": "免费开源的 CTF 入门教程，致力于 CTF 和网络安全的开源生态。",

@@ -18,7 +18,19 @@ https://zzuli.dev
 
 ## 项目列表
 
-> 欢迎提交自己开发的有意义或很酷的项目～🎉
+> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。
+
+- [SecToolKit - 网络安全工具索引](https://github.com/ProbiusOfficial/SecToolKit): 收录 CTF 和网络安全常用工具及文档的开源知识库。 (@ProbiusOfficial · Other)
+
+- [CTF-OS - CTF 比赛虚拟机](https://github.com/ProbiusOfficial/CTF-OS): 为 CTF 比赛封装的开箱即用虚拟机环境。 (@ProbiusOfficial · Other)
+
+- [Diarum - 自托管日记应用](https://github.com/songtianlun/diarum): 简洁优雅的自托管日记应用。 (@songtianlun · Go)
+
+- [iFace - 智能面试题库](https://github.com/dogxii/iFace): 面向 Agent、前端、Golang 和 Java 的智能刷题工具。 (@dogxii · TypeScript)
+
+- [AI Data Access Gateway - AI 数据访问网关](https://github.com/HanZephyr/AI-Data-Access-Gateway): 通过 MCP 协议为 AI Agent 提供数据库安全访问服务。 (@HanZephyr · Python)
+
+- [DocVision - AI 文档解析管线](https://github.com/LingNc/DocVision): 将 PDF 拆分、解析并转换为适合 AI 读取的 Markdown 文档。 (@LingNc · Go)
 
 - [Hello CTF - CTF 入门教程](https://github.com/ProbiusOfficial/Hello-CTF): 免费开源的 CTF 入门教程，致力于 CTF 和网络安全的开源生态。 (@ProbiusOfficial · Other)
 
@@ -30,7 +42,7 @@ https://zzuli.dev
 
 ## 校友大合集
 
-> 收集中 ... 欢迎提交新校友 XD
+> 收录 ZZULI 开发者成员和公开主页。欢迎通过 Issue 或 PR 补充。
 
 ---
 
@@ -68,7 +80,7 @@ https://zzuli.dev
 | ljq              | [ysehertz](https://github.com/ysehertz)                 |                                                |
 | huiyinian        | [huiyinian](https://github.com/huiyinian)               | [csdn](https://blog.csdn.net/qq_44379458)      |
 | naseele-vollerei | [naseele-vollerei](https://github.com/naseele-vollerei) | [砚雪斋](https://naseele-vollerei.cn)          |
-| 音波             | [yin-bo-Final](https://github.com/yin-bo-Final)         | [yin\*bo\*'s BLOG](https://blog.yinbo.online)  |
+| 音波             | [yin-bo-Final](https://github.com/yin-bo-Final)         | [yin\_bo\_'s BLOG](https://blog.yinbo.online)  |
 | 张昊哲           | [hua-AKA](https://github.com/hua-AKA)                   |                                                |
 | Li ZhiBo         | [leabol](https://github.com/leabol)                     |                                                |
 | Liu donghao      | [dongsayu](https://github.com/dongsayu)                 |                                                |
