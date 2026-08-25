@@ -1,4 +1,5 @@
 <script lang="ts">
+import { onDestroy } from 'svelte'
 import GlobalSearch from '$lib/components/GlobalSearch.svelte'
 import type { SearchItem } from '$lib/search'
 import type { ResolvedTheme, ThemeMode } from '$lib/theme'
@@ -20,6 +21,7 @@ const themeLabels: Record<ThemeMode, string> = {
 	dark: 'Night',
 	light: 'Light',
 }
+const THEME_TOOLTIP_HIDE_DELAY = 650
 
 let {
 	brandAriaLabel = '返回首页',
@@ -34,18 +36,47 @@ let {
 }: Props = $props()
 
 let showThemeTooltip = $state(false)
+let themeTooltipTimer: ReturnType<typeof setTimeout> | null = null
 let nextThemeMode = $derived(getNextThemeMode(themeMode))
 let themeToggleLabel = $derived(themeLabels[nextThemeMode])
 
+onDestroy(clearThemeTooltipTimer)
+
 function toggleThemeMode() {
-	showThemeTooltip = false
+	showThemeTooltip = true
 	onThemeModeChange(nextThemeMode)
+	hideThemeTooltipSoon()
 }
 
 function getNextThemeMode(mode: ThemeMode): ThemeMode {
 	if (mode === 'light') return 'dark'
 	if (mode === 'dark') return 'auto'
 	return 'light'
+}
+
+function clearThemeTooltipTimer() {
+	if (themeTooltipTimer) {
+		clearTimeout(themeTooltipTimer)
+		themeTooltipTimer = null
+	}
+}
+
+function showThemeTooltipNow() {
+	clearThemeTooltipTimer()
+	showThemeTooltip = true
+}
+
+function hideThemeTooltipNow() {
+	clearThemeTooltipTimer()
+	showThemeTooltip = false
+}
+
+function hideThemeTooltipSoon() {
+	clearThemeTooltipTimer()
+	themeTooltipTimer = setTimeout(() => {
+		showThemeTooltip = false
+		themeTooltipTimer = null
+	}, THEME_TOOLTIP_HIDE_DELAY)
 }
 </script>
 
@@ -91,10 +122,10 @@ function getNextThemeMode(mode: ThemeMode): ThemeMode {
 				<button
 					type="button"
 					onclick={toggleThemeMode}
-					onblur={() => (showThemeTooltip = false)}
-					onfocus={() => (showThemeTooltip = true)}
-					onmouseenter={() => (showThemeTooltip = true)}
-					onmouseleave={() => (showThemeTooltip = false)}
+					onblur={hideThemeTooltipNow}
+					onfocus={showThemeTooltipNow}
+					onmouseenter={showThemeTooltipNow}
+					onmouseleave={hideThemeTooltipNow}
 					class="flex h-9 w-9 items-center justify-center rounded-full text-[#4b5563] hover:bg-[#eef2f7] dark:text-[#b6beca] dark:hover:bg-[#202631]"
 					aria-label={`切换到 ${themeToggleLabel}`}
 				>

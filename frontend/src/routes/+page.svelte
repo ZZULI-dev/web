@@ -681,7 +681,7 @@ function sourceStatusLabel(status: string): string {
 						</svg>
 					</a>
 				</div>
-				<p class="mt-1">本站由校友自发创建，非学校官方网站，与学校无任何隶属关系，不代表官方立场</p>
+				<p class="mt-1">本站由校友自发创建，非学校官方网站，与学校无任何隶属关系，不代表官方立场；本站大部分数据均为每日更新</p>
 			</footer>
 		</aside>
 
