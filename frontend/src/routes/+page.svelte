@@ -159,7 +159,7 @@ function sourceStatusLabel(status: string): string {
 	/>
 
 	<main class="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 md:grid-cols-[minmax(0,1fr)_320px] lg:grid-cols-[minmax(0,1fr)_340px]">
-		<section id="feed" class="min-w-0 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+		<section id="feed" class="min-w-0 scroll-mt-20 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 			<div class="flex items-center justify-between gap-4 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 				<div class="flex min-w-0 items-center gap-3">
 					<h1 class="text-base font-semibold">文章</h1>
@@ -212,7 +212,15 @@ function sourceStatusLabel(status: string): string {
 								<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#6b7280] dark:text-[#9aa4b2]">
 									<span class="font-medium text-[#374151] dark:text-[#cbd5e1]">{post.sourceName}</span>
 									<span>{formatPostDate(post.publishedAt)}</span>
-									<span>{post.discoveredBy === 'feed' ? 'RSS' : '网页'}</span>
+									{#if post.discoveredBy === 'feed'}
+										<span class="inline-flex items-center gap-1">
+											<svg class="h-3 w-3" viewBox="0 0 16 16" fill="currentColor">
+												<path d="M2 3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H3a1 1 0 0 1-1-1V3zm1 0v10h10V3H3z"></path>
+												<path d="M5 5h6v1H5V5zm0 2h6v1H5V7zm0 2h4v1H5V9z"></path>
+											</svg>
+											RSS
+										</span>
+									{/if}
 								</div>
 							</div>
 						</a>
@@ -234,26 +242,42 @@ function sourceStatusLabel(status: string): string {
 		<aside class="space-y-4">
 			<section class="rounded-2xl bg-white p-4 shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 				<div class="grid grid-cols-2 gap-3 text-sm">
-					<div>
+					<a
+						href="#feed"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看文章"
+					>
 						<p class="text-xl font-semibold">{data.blogPostCount}</p>
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章</p>
-					</div>
-					<div>
+					</a>
+					<a
+						href="#members"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看成员"
+					>
 						<p class="text-xl font-semibold">{totalAlumni}</p>
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">成员</p>
-					</div>
-					<div>
+					</a>
+					<a
+						href="#projects"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看项目"
+					>
 						<p class="text-xl font-semibold">{totalProjects}</p>
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">项目</p>
-					</div>
-					<div>
+					</a>
+					<a
+						href="#sources"
+						class="-m-2 block rounded-xl p-2 hover:bg-[#f8fafc] focus:outline-none focus:ring-2 focus:ring-[#7dd3fc] dark:hover:bg-[#1b2129]"
+						aria-label="查看文章来源"
+					>
 						<p class="text-xl font-semibold">{totalBlogs}</p>
 						<p class="text-[#6b7280] dark:text-[#9aa4b2]">文章源</p>
-					</div>
+					</a>
 				</div>
 			</section>
 
-			<section class="rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
+			<section class="rounded-2xl bg-white overflow-hidden shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 				<div>
 					<a
 						href="https://github.com/dogxii/ZZULI.dev"
@@ -295,7 +319,7 @@ function sourceStatusLabel(status: string): string {
 
 			<section
 				id="projects"
-				class="rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
+				class="scroll-mt-20 rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
 			>
 				<div class="flex items-center justify-between gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 					<div class="min-w-0">
@@ -407,7 +431,7 @@ function sourceStatusLabel(status: string): string {
 
 		<section
 			id="members"
-			class="min-w-0 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:col-span-2 dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
+			class="min-w-0 scroll-mt-20 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:col-span-2 dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
 		>
 			<div class="flex flex-col gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] sm:flex-row sm:items-center sm:justify-between dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 				<div>
@@ -498,7 +522,7 @@ function sourceStatusLabel(status: string): string {
 
 		<section
 			id="sources"
-			class="min-w-0 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:col-span-2 dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
+			class="min-w-0 scroll-mt-20 overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] md:col-span-2 dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]"
 		>
 			<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
 				<div class="flex items-center gap-1.5">

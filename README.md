@@ -1,6 +1,6 @@
 ## ZZULI.dev
 
-郑州轻工业大学开发者索引，收录成员、项目和博客文章。
+收集所有 ZZULI 开发者校友信息，GitHub、项目、博客等，看看大家都在干什么 :D
 
 ![banner](./banner/banner.webp)
 
@@ -18,7 +18,7 @@ https://zzuli.dogxi.me
 
 ## 项目列表
 
-> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。
+> 欢迎提交自己开发的有意义或很酷的项目～🎉
 
 - [Hello CTF - CTF 入门教程](https://github.com/ProbiusOfficial/Hello-CTF): 免费开源的 CTF 入门教程，致力于 CTF 和网络安全的开源生态。 (@ProbiusOfficial · Other)
 
@@ -30,7 +30,7 @@ https://zzuli.dogxi.me
 
 ## 校友大合集
 
-> 收录 ZZULI 开发者成员和公开主页。欢迎通过 Issue 或 PR 补充。
+> 收集中 ... 欢迎提交新校友 XD
 
 ---
 

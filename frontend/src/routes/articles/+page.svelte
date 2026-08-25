@@ -184,27 +184,21 @@ const INITIAL_AUTHOR_POSTS = 5
 	<main class="mx-auto max-w-5xl px-4 py-5 sm:px-6">
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
 			<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-				<div class="flex items-center gap-4">
-					<div class="min-w-0 shrink-0">
-						<h1 class="text-base font-semibold">文章列表</h1>
-						<p class="mt-0.5 whitespace-nowrap text-xs text-[#6b7280] dark:text-[#9aa4b2]">
-							{filteredPosts.length} 篇{filteredPosts.length !== data.blogPostCount
-								? ` / ${data.blogPostCount} 篇`
-								: ''}
-						</p>
-					</div>
+				<div class="flex items-center gap-2">
+					<h1 class="sr-only">文章列表</h1>
 					<label class="block min-w-0 flex-1">
+						<span class="sr-only">搜索文章</span>
 						<input
 							type="search"
 							bind:value={searchTerm}
 							placeholder="搜索标题或作者"
-							class="w-full rounded-full bg-[#f3f5f7] px-4 py-2 text-sm outline-none ring-1 ring-transparent focus:ring-[#7dd3fc] dark:bg-[#202631]"
+							class="h-10 w-full rounded-full bg-[#f3f5f7] px-4 text-base outline-none ring-1 ring-transparent focus:ring-[#7dd3fc] sm:text-sm dark:bg-[#202631]"
 						/>
 					</label>
-					<div class="flex shrink-0 gap-1 rounded-full bg-[#f3f5f7] p-1 dark:bg-[#202631]">
+					<div class="flex h-10 shrink-0 items-center gap-1 rounded-full bg-[#f3f5f7] p-1 dark:bg-[#202631]">
 						<button
 							onclick={() => (groupBy = 'time')}
-							class="rounded-full px-3 py-1 text-xs font-medium transition-colors {groupBy === 'time'
+							class="h-8 rounded-full px-3 text-xs font-medium transition-colors {groupBy === 'time'
 								? 'bg-white text-[#202124] shadow-sm dark:bg-[#2b3139] dark:text-[#e8eaed]'
 								: 'text-[#6b7280] hover:text-[#202124] dark:text-[#9aa4b2] dark:hover:text-[#e8eaed]'}"
 						>
@@ -212,7 +206,7 @@ const INITIAL_AUTHOR_POSTS = 5
 						</button>
 						<button
 							onclick={() => (groupBy = 'author')}
-							class="rounded-full px-3 py-1 text-xs font-medium transition-colors {groupBy === 'author'
+							class="h-8 rounded-full px-3 text-xs font-medium transition-colors {groupBy === 'author'
 								? 'bg-white text-[#202124] shadow-sm dark:bg-[#2b3139] dark:text-[#e8eaed]'
 								: 'text-[#6b7280] hover:text-[#202124] dark:text-[#9aa4b2] dark:hover:text-[#e8eaed]'}"
 						>

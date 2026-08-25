@@ -84,35 +84,30 @@ function formatProjectDate(value: string | null): string {
 
 	<main class="mx-auto max-w-5xl px-4 py-5 sm:px-6">
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-			<div class="space-y-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
-				<div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-					<div class="min-w-0 shrink-0">
-						<h1 class="text-base font-semibold">项目列表</h1>
-						<p class="mt-0.5 whitespace-nowrap text-xs text-[#6b7280] dark:text-[#9aa4b2]">
-							{filteredProjects.length} 个{filteredProjects.length !== data.projects.length
-								? ` / ${data.projects.length} 个`
-								: ''}
-						</p>
-					</div>
-					<div class="flex min-w-0 gap-2 sm:flex-1">
-						<label class="block min-w-0 flex-1">
-							<span class="sr-only">搜索项目</span>
-							<input
-								type="search"
-								bind:value={searchTerm}
-								placeholder="搜索项目、作者或语言"
-								class="w-full rounded-full bg-[#f3f5f7] px-4 py-2 text-sm outline-none ring-1 ring-transparent focus:ring-[#7dd3fc] dark:bg-[#202631]"
-							/>
-						</label>
-						<a
-							href="https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml"
-							target="_blank"
-							rel="noopener noreferrer"
-							class="shrink-0 rounded-full bg-[#eef6ff] px-3 py-2 text-xs font-medium text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
-						>
-							提交项目
-						</a>
-					</div>
+			<div class="px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.08)] dark:shadow-[0_1px_0_rgba(255,255,255,0.08)]">
+				<div class="flex items-center gap-2">
+					<h1 class="sr-only">项目列表</h1>
+					<label class="block min-w-0 flex-1">
+						<span class="sr-only">搜索项目</span>
+						<input
+							type="search"
+							bind:value={searchTerm}
+							placeholder="搜索项目、作者或语言"
+							class="h-10 w-full rounded-full bg-[#f3f5f7] px-4 text-base outline-none ring-1 ring-transparent focus:ring-[#7dd3fc] sm:text-sm dark:bg-[#202631]"
+						/>
+					</label>
+					<a
+						href="https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml"
+						target="_blank"
+						rel="noopener noreferrer"
+						class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#eef6ff] text-[#0969da] hover:bg-[#ddf4ff] dark:bg-[#10233a] dark:text-[#7cc4ff] dark:hover:bg-[#17314f]"
+						aria-label="提交项目"
+						title="提交项目"
+					>
+						<svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+							<path d="M5 12h14M12 5v14" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+						</svg>
+					</a>
 				</div>
 			</div>
 
