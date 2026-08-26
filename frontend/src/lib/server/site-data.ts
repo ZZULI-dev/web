@@ -29,6 +29,7 @@ export type FriendLink = {
 export type Alumni = {
 	id: string
 	nickname: string
+	joinedAt: string | null
 	github: {
 		username: string
 		url: string
@@ -163,6 +164,7 @@ const DEFAULT_SITE_STATS_DAYS = 30
 type AlumniRecord = {
 	nickname?: string
 	github?: string
+	joinedAt?: string | null
 	blog?: {
 		name?: string
 		url?: string
@@ -295,6 +297,7 @@ function toAlumni(record: AlumniRecord): Alumni | null {
 	return {
 		id: username.toLowerCase(),
 		nickname,
+		joinedAt: record.joinedAt ?? null,
 		github: {
 			username,
 			url: `https://github.com/${username}`,
@@ -624,8 +627,7 @@ function readSiteStats(): SiteStats {
 			pageViews: parsed.pageViews ?? null,
 			visits: parsed.visits ?? null,
 			uniqueVisitors: parsed.uniqueVisitors ?? null,
-			uniqueVisitorsApproximate:
-				parsed.uniqueVisitorsApproximate ?? false,
+			uniqueVisitorsApproximate: parsed.uniqueVisitorsApproximate ?? false,
 			totalPageViews: parsed.totalPageViews ?? parsed.pageViews ?? null,
 			totalPageViewsStartedAt: parsed.totalPageViewsStartedAt ?? null,
 			totalPageViewsUpdatedThrough:
@@ -658,7 +660,9 @@ function buildSearchIndex({
 }): SearchItem[] {
 	const items: SearchItem[] = []
 	const seen = new Set<string>()
-	const alumniByName = new Map(alumni.map((person) => [person.nickname, person]))
+	const alumniByName = new Map(
+		alumni.map((person) => [person.nickname, person]),
+	)
 	const addItem = (item: SearchItem) => {
 		const key = `${item.type}:${item.href}`
 		if (seen.has(key)) return

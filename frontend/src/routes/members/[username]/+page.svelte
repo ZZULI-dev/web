@@ -3,18 +3,18 @@ import { onDestroy, onMount } from 'svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
 import {
-	downloadProfileCard,
-	type ProfileCardEntry,
-	type ProfileCardMetric,
+  downloadProfileCard,
+  type ProfileCardEntry,
+  type ProfileCardMetric,
 } from '$lib/profile-card'
 import { SITE_ORIGIN } from '$lib/site'
 import {
-	getSavedThemeMode,
-	type ResolvedTheme,
-	resolveThemeMode,
-	saveThemeMode,
-	type ThemeMode,
-	watchSystemTheme,
+  getSavedThemeMode,
+  type ResolvedTheme,
+  resolveThemeMode,
+  saveThemeMode,
+  type ThemeMode,
+  watchSystemTheme,
 } from '$lib/theme'
 import type { PageData } from './$types'
 
@@ -30,171 +30,171 @@ let profileActionTimer: ReturnType<typeof setTimeout> | null = null
 let profileUrl = $derived(`${SITE_ORIGIN}${data.person.profilePath}`)
 
 onMount(() => {
-	themeMode = getSavedThemeMode()
-	resolvedTheme = resolveThemeMode(themeMode)
+  themeMode = getSavedThemeMode()
+  resolvedTheme = resolveThemeMode(themeMode)
 
-	return watchSystemTheme((systemTheme) => {
-		if (themeMode === 'auto') {
-			resolvedTheme = systemTheme
-		}
-	})
+  return watchSystemTheme((systemTheme) => {
+    if (themeMode === 'auto') {
+      resolvedTheme = systemTheme
+    }
+  })
 })
 
 onDestroy(clearProfileActionTimer)
 
 function setThemeMode(mode: ThemeMode) {
-	themeMode = mode
-	resolvedTheme = resolveThemeMode(mode)
-	saveThemeMode(mode)
+  themeMode = mode
+  resolvedTheme = resolveThemeMode(mode)
+  saveThemeMode(mode)
 }
 
 async function copyProfileLink() {
-	try {
-		await copyText(profileUrl)
-		showProfileActionMessage('已复制', true)
-	} catch (error) {
-		console.error('Failed to copy profile link:', error)
-		showProfileActionMessage('复制失败')
-	}
+  try {
+    await copyText(profileUrl)
+    showProfileActionMessage('已复制', true)
+  } catch (error) {
+    console.error('Failed to copy profile link:', error)
+    showProfileActionMessage('复制失败')
+  }
 }
 
 async function exportProfileImage() {
-	if (isExportingProfileImage) return
+  if (isExportingProfileImage) return
 
-	isExportingProfileImage = true
+  isExportingProfileImage = true
 
-	try {
-		await downloadProfileCard({
-			avatarUrl: getProfileCardAvatarUrl(data.person.github.username),
-			blogUrl: data.person.blog?.url,
-			contributionCalendar: data.activity?.calendar,
-			githubUsername: data.person.github.username,
-			metrics: getProfileCardMetrics(),
-			nickname: data.person.nickname,
-			posts: getProfileCardPosts(),
-			projects: getProfileCardProjects(),
-		})
-		showProfileActionMessage('已导出')
-	} catch (error) {
-		console.error('Failed to export profile image:', error)
-		showProfileActionMessage('导出失败')
-	} finally {
-		isExportingProfileImage = false
-	}
+  try {
+    await downloadProfileCard({
+      avatarUrl: getProfileCardAvatarUrl(data.person.github.username),
+      blogUrl: data.person.blog?.url,
+      contributionCalendar: data.activity?.calendar,
+      githubUsername: data.person.github.username,
+      metrics: getProfileCardMetrics(),
+      nickname: data.person.nickname,
+      posts: getProfileCardPosts(),
+      projects: getProfileCardProjects(),
+    })
+    showProfileActionMessage('已导出')
+  } catch (error) {
+    console.error('Failed to export profile image:', error)
+    showProfileActionMessage('导出失败')
+  } finally {
+    isExportingProfileImage = false
+  }
 }
 
 async function copyText(value: string) {
-	if (navigator.clipboard?.writeText && window.isSecureContext) {
-		await navigator.clipboard.writeText(value)
-		return
-	}
+  if (navigator.clipboard?.writeText && window.isSecureContext) {
+    await navigator.clipboard.writeText(value)
+    return
+  }
 
-	const textarea = document.createElement('textarea')
-	textarea.value = value
-	textarea.setAttribute('readonly', '')
-	textarea.style.position = 'fixed'
-	textarea.style.opacity = '0'
-	document.body.append(textarea)
-	textarea.select()
+  const textarea = document.createElement('textarea')
+  textarea.value = value
+  textarea.setAttribute('readonly', '')
+  textarea.style.position = 'fixed'
+  textarea.style.opacity = '0'
+  document.body.append(textarea)
+  textarea.select()
 
-	const copied = document.execCommand('copy')
-	textarea.remove()
+  const copied = document.execCommand('copy')
+  textarea.remove()
 
-	if (!copied) {
-		throw new Error('Copy failed')
-	}
+  if (!copied) {
+    throw new Error('Copy failed')
+  }
 }
 
 function getProfileCardMetrics(): ProfileCardMetric[] {
-	return [
-		{
-			label: data.activity ? '昨日贡献' : 'GitHub',
-			value: data.activity
-				? formatMetric(data.activity.latestDayContributions)
-				: `@${data.person.github.username}`,
-		},
-		{
-			label: data.activity ? `近 ${data.activity.range.recentDays} 天` : '博客',
-			value: data.activity
-				? formatMetric(data.activity.recentContributions)
-				: data.person.blog
-					? '已收录'
-					: '未收录',
-		},
-		{
-			label: data.activity ? '近一年贡献' : '贡献',
-			value: data.activity
-				? formatMetric(data.activity.totalContributions)
-				: '等待采集',
-		},
-		{
-			label: '项目',
-			value: formatMetric(data.projects.length),
-		},
-		{
-			label: '文章',
-			value: formatMetric(data.posts.length),
-		},
-	]
+  return [
+    {
+      label: data.activity ? '昨天贡献' : 'GitHub',
+      value: data.activity
+        ? formatMetric(data.activity.latestDayContributions)
+        : `@${data.person.github.username}`,
+    },
+    {
+      label: data.activity ? `近 ${data.activity.range.recentDays} 天` : '博客',
+      value: data.activity
+        ? formatMetric(data.activity.recentContributions)
+        : data.person.blog
+          ? '已收录'
+          : '未收录',
+    },
+    {
+      label: data.activity ? '近一年贡献' : '贡献',
+      value: data.activity
+        ? formatMetric(data.activity.totalContributions)
+        : '等待采集',
+    },
+    {
+      label: '项目',
+      value: formatMetric(data.projects.length),
+    },
+    {
+      label: '文章',
+      value: formatMetric(data.posts.length),
+    },
+  ]
 }
 
 function getProfileCardProjects(): ProfileCardEntry[] {
-	return data.projects.slice(0, 3).map((project) => ({
-		badge: project.languages[0]
-			? {
-					color: project.languages[0].color,
-					label: project.languages[0].name,
-				}
-			: undefined,
-		title: project.name,
-	}))
+  return data.projects.slice(0, 3).map((project) => ({
+    badge: project.languages[0]
+      ? {
+          color: project.languages[0].color,
+          label: project.languages[0].name,
+        }
+      : undefined,
+    title: project.name,
+  }))
 }
 
 function getProfileCardPosts(): ProfileCardEntry[] {
-	return data.posts.slice(0, 4).map((post) => ({
-		meta: formatPostDate(post.publishedAt),
-		title: post.title,
-	}))
+  return data.posts.slice(0, 4).map((post) => ({
+    meta: formatPostDate(post.publishedAt),
+    title: post.title,
+  }))
 }
 
 function getProfileCardAvatarUrl(username: string) {
-	return `https://avatars.githubusercontent.com/${encodeURIComponent(username)}?s=312`
+  return `https://avatars.githubusercontent.com/${encodeURIComponent(username)}?s=312`
 }
 
 function showProfileActionMessage(message: string, copied = false) {
-	clearProfileActionTimer()
-	copiedProfileUrl = copied
-	profileActionMessage = message
-	profileActionTimer = setTimeout(() => {
-		copiedProfileUrl = false
-		profileActionMessage = ''
-		profileActionTimer = null
-	}, 1800)
+  clearProfileActionTimer()
+  copiedProfileUrl = copied
+  profileActionMessage = message
+  profileActionTimer = setTimeout(() => {
+    copiedProfileUrl = false
+    profileActionMessage = ''
+    profileActionTimer = null
+  }, 1800)
 }
 
 function clearProfileActionTimer() {
-	if (profileActionTimer) {
-		clearTimeout(profileActionTimer)
-		profileActionTimer = null
-	}
+  if (profileActionTimer) {
+    clearTimeout(profileActionTimer)
+    profileActionTimer = null
+  }
 }
 
 function formatProjectDate(value: string | null): string {
-	if (!value) return '收录时间未知'
+  if (!value) return '收录时间未知'
 
-	const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
-	if (!match) return value.replace(/-/g, '.')
+  const match = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (!match) return value.replace(/-/g, '.')
 
-	const [, year, month, day] = match
-	return Number(year) === new Date().getFullYear()
-		? `${month}.${day}`
-		: `${year}.${month}.${day}`
+  const [, year, month, day] = match
+  return Number(year) === new Date().getFullYear()
+    ? `${month}.${day}`
+    : `${year}.${month}.${day}`
 }
 
 function contributionTitle(
-	day: NonNullable<PageData['activity']>['calendar'][number],
+  day: NonNullable<PageData['activity']>['calendar'][number],
 ): string {
-	return `${day.date}: ${day.count} 次贡献`
+  return `${day.date}: ${day.count} 次贡献`
 }
 </script>
 
@@ -316,7 +316,7 @@ function contributionTitle(
 					<div class="grid grid-cols-3 gap-4 text-sm">
 						<div>
 							<p class="text-lg font-semibold">{formatMetric(data.activity.latestDayContributions)}</p>
-							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">昨日</p>
+							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">昨天</p>
 						</div>
 						<div>
 							<p class="text-lg font-semibold">{formatMetric(data.activity.recentContributions)}</p>

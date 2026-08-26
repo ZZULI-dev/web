@@ -13,22 +13,6 @@ ZZULI.dev 是静态站点，推荐部署到 Cloudflare Pages。
 
 如果使用 Wrangler 直接上传构建产物，才需要额外准备 `CLOUDFLARE_ACCOUNT_ID` 和可部署 Pages 的 `CLOUDFLARE_API_TOKEN`，然后上传 `frontend/build`。
 
-## 域名
-
-- 主域名：`https://zzuli.dev`
-- Pages 项目里添加自定义域名 `zzuli.dev`
-- 旧域名 `zzuli.dogxi.me` 使用 Cloudflare Redirect Rule 做 301 跳转
-
-Redirect Rule 建议：
-
-- When incoming requests match: `(http.host eq "zzuli.dogxi.me")`
-- Type: Dynamic
-- Expression: `concat("https://zzuli.dev", http.request.uri.path)`
-- Status code: `301`
-- Preserve query string: 开启
-
-不要把整站旧域名跳转写进 Pages `_redirects`。`_redirects` 更适合路径规则；同一个 Pages 项目同时绑定新旧域名时，用主机名匹配的 Redirect Rule 更清晰，也能避免跳转环。
-
 ## 数据采集
 
 站点构建时只读取 `data/*.json`，前端不会在用户访问时请求 GitHub 或 Cloudflare API。

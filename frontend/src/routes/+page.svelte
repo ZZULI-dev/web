@@ -1,38 +1,40 @@
 <script lang="ts">
 import { onMount } from 'svelte'
 import {
-  ACTIVITY_PERIODS,
-  type ActivityPeriodKey,
-  getActivityMemberView,
-  getActivityPeriod,
-  getContributionCount,
-  getNextActivityPeriodKey,
-  isActivityPeriodKey,
+	ACTIVITY_PERIODS,
+	type ActivityPeriodKey,
+	getActivityMemberView,
+	getActivityPeriod,
+	getContributionCount,
+	getNextActivityPeriodKey,
+	isActivityPeriodKey,
 } from '$lib/activity'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
 import { REPOSITORY_URL, SITE_ORIGIN } from '$lib/site'
 import {
-  getSavedThemeMode,
-  type ResolvedTheme,
-  resolveThemeMode,
-  saveThemeMode,
-  type ThemeMode,
-  watchSystemTheme,
+	getSavedThemeMode,
+	type ResolvedTheme,
+	resolveThemeMode,
+	saveThemeMode,
+	type ThemeMode,
+	watchSystemTheme,
 } from '$lib/theme'
 import type { PageData } from './$types'
 
 const HOME_POST_LIMIT = 20
 const HOME_PROJECT_LIMIT = 5
 const HOME_ACTIVITY_STORAGE_KEY = 'zzuli-home-activity-period'
+const READ_POSTS_STORAGE_KEY = 'zzuli-read-posts'
+const READ_POST_TTL_MS = 180 * 24 * 60 * 60 * 1000
 const SIDEBAR_MEMBER_COLUMNS = 7
 const SIDEBAR_MEMBER_ROWS = 4
 const SIDEBAR_MEMBER_SLOTS = SIDEBAR_MEMBER_COLUMNS * SIDEBAR_MEMBER_ROWS
 const COPYRIGHT_YEAR = new Date().getFullYear()
 const SUBMIT_ALUMNI_URL =
-  'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-alumni.yml'
+	'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-alumni.yml'
 const SUBMIT_PROJECT_URL =
-  'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml'
+	'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml'
 const CONTACT_EMAIL = 'hi@dogxi.me'
 type SiteStatsIcon = 'views' | 'visitors'
 
@@ -46,189 +48,252 @@ let memberOrder = $state<PageData['alumni']>([])
 let projectSample = $state<PageData['projects']>([])
 let sourcesExpanded = $state(false)
 let selectedHomeActivityPeriod = $state<ActivityPeriodKey>('7d')
+let readPostUrls = $state<Set<string>>(new Set())
 
 let totalAlumni = $derived(data.alumni.length)
 let totalProjects = $derived(data.projects.length)
 let totalBlogs = $derived(
-  data.alumni.filter((person) => person.blog?.url).length,
+	data.alumni.filter((person) => person.blog?.url).length,
 )
 let sourceHelpText = $derived(`爬取${data.blogCrawlWindowLabel}的文章`)
 let normalizedSearch = $derived(searchTerm.trim().toLowerCase())
 let orderedAlumni = $derived(memberOrder.length > 0 ? memberOrder : data.alumni)
 let filteredAlumni = $derived(
-  orderedAlumni.filter((person) => {
-    if (!normalizedSearch) return true
+	orderedAlumni.filter((person) => {
+		if (!normalizedSearch) return true
 
-    return [
-      person.nickname,
-      person.github.username,
-      person.github.url,
-      person.blog?.name,
-      person.blog?.url,
-    ]
-      .filter(Boolean)
-      .some((value) => value?.toLowerCase().includes(normalizedSearch))
-  }),
+		return [
+			person.nickname,
+			person.github.username,
+			person.github.url,
+			person.blog?.name,
+			person.blog?.url,
+		]
+			.filter(Boolean)
+			.some((value) => value?.toLowerCase().includes(normalizedSearch))
+	}),
 )
 let homePosts = $derived(data.blogPosts)
 let hasMorePosts = $derived(data.blogPostCount > HOME_POST_LIMIT)
 let featuredProjects = $derived(
-  projectSample.length > 0
-    ? projectSample
-    : data.projects.slice(0, HOME_PROJECT_LIMIT),
+	projectSample.length > 0
+		? projectSample
+		: data.projects.slice(0, HOME_PROJECT_LIMIT),
 )
 let avatarMembers = $derived(data.alumni.filter((person) => person.avatar))
 let sidebarMemberLimit = $derived(
-  avatarMembers.length > SIDEBAR_MEMBER_SLOTS
-    ? SIDEBAR_MEMBER_SLOTS - 1
-    : SIDEBAR_MEMBER_SLOTS,
+	avatarMembers.length > SIDEBAR_MEMBER_SLOTS
+		? SIDEBAR_MEMBER_SLOTS - 1
+		: SIDEBAR_MEMBER_SLOTS,
 )
 let featuredMembers = $derived(
-  memberSample.length > 0
-    ? memberSample
-    : avatarMembers.slice(0, sidebarMemberLimit),
+	memberSample.length > 0
+		? memberSample
+		: avatarMembers.slice(0, sidebarMemberLimit),
 )
 let hiddenMemberCount = $derived(
-  Math.max(0, avatarMembers.length - featuredMembers.length),
+	Math.max(0, avatarMembers.length - featuredMembers.length),
 )
 let alumniByName = $derived(
-  new Map(data.alumni.map((person) => [person.nickname, person])),
+	new Map(data.alumni.map((person) => [person.nickname, person])),
 )
 let alumniByGitHub = $derived(
-  new Map(data.alumni.map((person) => [person.id, person])),
+	new Map(data.alumni.map((person) => [person.id, person])),
 )
 let visibleSources = $derived((data.blogSources ?? []).slice(0, 50))
 let homeActivityPeriod = $derived(getActivityPeriod(selectedHomeActivityPeriod))
 let hasGitHubActivityData = $derived(data.githubActivity.members.length > 0)
 let activeMembers = $derived.by(() =>
-  data.githubActivity.members
-    .map((member) => ({
-      contributions: getContributionCount(member, homeActivityPeriod.days),
-      member,
-    }))
-    .filter((item) => item.contributions > 0)
-    .sort((a, b) => {
-      if (b.contributions !== a.contributions) {
-        return b.contributions - a.contributions
-      }
-      return b.member.totalContributions - a.member.totalContributions
-    })
-    .slice(0, 5),
+	data.githubActivity.members
+		.map((member) => ({
+			contributions: getContributionCount(member, homeActivityPeriod.days),
+			member,
+		}))
+		.filter((item) => item.contributions > 0)
+		.sort((a, b) => {
+			if (b.contributions !== a.contributions) {
+				return b.contributions - a.contributions
+			}
+			return b.member.totalContributions - a.member.totalContributions
+		})
+		.slice(0, 5),
 )
 let siteStatsItems = $derived.by(() =>
-  [
-    {
-      icon: 'views' as const,
-      label: '总访问',
-      value: data.siteStats.totalPageViews,
-      title: data.siteStats.totalPageViewsStartedAt
-        ? `自 ${data.siteStats.totalPageViewsStartedAt} 起累计 PV`
-        : '累计页面浏览量',
-    },
-    {
-      icon: 'visitors' as const,
-      label: '月访客',
-      value: data.siteStats.uniqueVisitors,
-      title: data.siteStats.uniqueVisitorsApproximate
-        ? `近 ${data.siteStats.range.days} 天按天独立访客汇总`
-        : '独立访客数',
-    },
-  ].filter(
-    (
-      item,
-    ): item is {
-      icon: SiteStatsIcon
-      label: string
-      value: number
-      title: string
-    } => typeof item.value === 'number' && Number.isFinite(item.value),
-  ),
+	[
+		{
+			icon: 'views' as const,
+			label: '总访问',
+			value: data.siteStats.totalPageViews,
+			title: data.siteStats.totalPageViewsStartedAt
+				? `自 ${data.siteStats.totalPageViewsStartedAt} 起累计 PV`
+				: '累计页面浏览量',
+		},
+		{
+			icon: 'visitors' as const,
+			label: '月访客',
+			value: data.siteStats.uniqueVisitors,
+			title: data.siteStats.uniqueVisitorsApproximate
+				? `近 ${data.siteStats.range.days} 天按天独立访客汇总`
+				: '独立访客数',
+		},
+	].filter(
+		(
+			item,
+		): item is {
+			icon: SiteStatsIcon
+			label: string
+			value: number
+			title: string
+		} => typeof item.value === 'number' && Number.isFinite(item.value),
+	),
 )
 let hasSiteStats = $derived(
-  data.siteStats.available && siteStatsItems.length > 0,
+	data.siteStats.available && siteStatsItems.length > 0,
 )
 
 onMount(() => {
-  themeMode = getSavedThemeMode()
-  resolvedTheme = resolveThemeMode(themeMode)
-  selectedHomeActivityPeriod = getSavedHomeActivityPeriod()
-  memberSample = shuffleMembers(avatarMembers).slice(0, sidebarMemberLimit)
-  randomizeProjects()
+	themeMode = getSavedThemeMode()
+	resolvedTheme = resolveThemeMode(themeMode)
+	selectedHomeActivityPeriod = getSavedHomeActivityPeriod()
+	readPostUrls = loadReadPostUrls()
+	memberSample = shuffleMembers(avatarMembers).slice(0, sidebarMemberLimit)
+	randomizeProjects()
 
-  return watchSystemTheme((systemTheme) => {
-    if (themeMode === 'auto') {
-      resolvedTheme = systemTheme
-    }
-  })
+	return watchSystemTheme((systemTheme) => {
+		if (themeMode === 'auto') {
+			resolvedTheme = systemTheme
+		}
+	})
 })
 
 function shuffleMembers(members: PageData['alumni']) {
-  return shuffleItems(members)
+	return shuffleItems(members)
 }
 
 function shuffleItems<T>(items: T[]) {
-  const shuffled = [...items]
+	const shuffled = [...items]
 
-  for (let index = shuffled.length - 1; index > 0; index -= 1) {
-    const swapIndex = Math.floor(Math.random() * (index + 1))
-    ;[shuffled[index], shuffled[swapIndex]] = [
-      shuffled[swapIndex],
-      shuffled[index],
-    ]
-  }
+	for (let index = shuffled.length - 1; index > 0; index -= 1) {
+		const swapIndex = Math.floor(Math.random() * (index + 1))
+		;[shuffled[index], shuffled[swapIndex]] = [
+			shuffled[swapIndex],
+			shuffled[index],
+		]
+	}
 
-  return shuffled
+	return shuffled
 }
 
 function shuffleMemberList() {
-  memberOrder = shuffleMembers(data.alumni)
+	memberOrder = shuffleMembers(data.alumni)
 }
 
 function randomizeProjects() {
-  projectSample = shuffleItems(data.projects).slice(0, HOME_PROJECT_LIMIT)
+	projectSample = shuffleItems(data.projects).slice(0, HOME_PROJECT_LIMIT)
 }
 
 function cycleHomeActivityPeriod() {
-  const nextPeriod = getNextActivityPeriodKey(selectedHomeActivityPeriod)
+	const nextPeriod = getNextActivityPeriodKey(selectedHomeActivityPeriod)
 
-  selectedHomeActivityPeriod = nextPeriod
-  saveHomeActivityPeriod(nextPeriod)
+	selectedHomeActivityPeriod = nextPeriod
+	saveHomeActivityPeriod(nextPeriod)
 }
 
 function setThemeMode(mode: ThemeMode) {
-  themeMode = mode
-  resolvedTheme = resolveThemeMode(mode)
-  saveThemeMode(mode)
+	themeMode = mode
+	resolvedTheme = resolveThemeMode(mode)
+	saveThemeMode(mode)
 }
 
 function getPostAvatar(sourceName: string): string | null {
-  return alumniByName.get(sourceName)?.avatar ?? null
+	return alumniByName.get(sourceName)?.avatar ?? null
 }
 
 function getSavedHomeActivityPeriod(): ActivityPeriodKey {
-  if (typeof localStorage === 'undefined') return '7d'
+	if (typeof localStorage === 'undefined') return '7d'
 
-  const value = localStorage.getItem(HOME_ACTIVITY_STORAGE_KEY)
-  return isActivityPeriodKey(value) ? value : '7d'
+	const value = localStorage.getItem(HOME_ACTIVITY_STORAGE_KEY)
+	return isActivityPeriodKey(value) ? value : '7d'
 }
 
 function saveHomeActivityPeriod(period: ActivityPeriodKey) {
-  if (typeof localStorage === 'undefined') return
+	if (typeof localStorage === 'undefined') return
 
-  localStorage.setItem(HOME_ACTIVITY_STORAGE_KEY, period)
+	localStorage.setItem(HOME_ACTIVITY_STORAGE_KEY, period)
+}
+
+function isPostRead(url: string): boolean {
+	return readPostUrls.has(url)
+}
+
+function markPostAsRead(url: string) {
+	if (typeof localStorage === 'undefined') return
+
+	const readAt = Date.now()
+	const records = loadReadPostRecords(readAt)
+
+	records[url] = readAt
+	saveReadPostRecords(records)
+	readPostUrls = new Set(Object.keys(records))
+}
+
+function loadReadPostUrls(now = Date.now()): Set<string> {
+	const records = loadReadPostRecords(now)
+	saveReadPostRecords(records)
+
+	return new Set(Object.keys(records))
+}
+
+function loadReadPostRecords(now = Date.now()): Record<string, number> {
+	if (typeof localStorage === 'undefined') return {}
+
+	try {
+		const parsed = JSON.parse(
+			localStorage.getItem(READ_POSTS_STORAGE_KEY) ?? '{}',
+		)
+		if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+			return {}
+		}
+
+		const records: Record<string, number> = {}
+
+		for (const [url, readAt] of Object.entries(parsed)) {
+			if (
+				typeof readAt === 'number' &&
+				Number.isFinite(readAt) &&
+				now - readAt <= READ_POST_TTL_MS
+			) {
+				records[url] = readAt
+			}
+		}
+
+		return records
+	} catch {
+		return {}
+	}
+}
+
+function saveReadPostRecords(records: Record<string, number>) {
+	if (typeof localStorage === 'undefined') return
+
+	try {
+		localStorage.setItem(READ_POSTS_STORAGE_KEY, JSON.stringify(records))
+	} catch {
+		// Ignore storage quota and private-mode failures; the link click should continue.
+	}
 }
 
 function sourceStatusLabel(status: string): string {
-  switch (status) {
-    case 'ok':
-      return '正常'
-    case 'empty':
-      return '未发现'
-    case 'error':
-      return '失败'
-    default:
-      return status
-  }
+	switch (status) {
+		case 'ok':
+			return '正常'
+		case 'empty':
+			return '未发现'
+		case 'error':
+			return '失败'
+		default:
+			return status
+	}
 }
 </script>
 
@@ -283,6 +348,7 @@ function sourceStatusLabel(status: string): string {
 							href={post.url}
 							target="_blank"
 							rel="noopener noreferrer"
+							onclick={() => markPostAsRead(post.url)}
 							class="group flex gap-3 px-4 py-3 shadow-[0_1px_0_rgba(31,35,40,0.07)] last:shadow-none hover:bg-[#f8fafc] dark:shadow-[0_1px_0_rgba(255,255,255,0.07)] dark:hover:bg-[#1b2129]"
 						>
 							{#if getPostAvatar(post.sourceName)}
@@ -301,7 +367,9 @@ function sourceStatusLabel(status: string): string {
 							{/if}
 
 							<div class="min-w-0 flex-1">
-								<h2 class="line-clamp-2 text-[15px] font-semibold leading-6 text-[#1d4ed8] group-hover:text-[#0f3a9c] dark:text-[#80bfff] dark:group-hover:text-[#a7d5ff]">
+								<h2 class="line-clamp-2 text-[15px] font-semibold leading-6 {isPostRead(post.url)
+									? 'text-[#6b7280] group-hover:text-[#4b5563] dark:text-[#7f8a99] dark:group-hover:text-[#9aa4b2]'
+									: 'text-[#1d4ed8] group-hover:text-[#0f3a9c] dark:text-[#80bfff] dark:group-hover:text-[#a7d5ff]'}">
 									{post.title}
 								</h2>
 								<div class="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-[#6b7280] dark:text-[#9aa4b2]">
