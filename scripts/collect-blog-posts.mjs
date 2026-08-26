@@ -60,6 +60,7 @@ const NAV_TITLES = new Set([
 const PATH_BLOCKLIST = [
 	/\/sitemaps?(?:\.xml)?\/?$/i,
 	/\/(?:about|archives?|categories?|tags?|friends?|links?|login|admin|search)(?:\/|$)/i,
+	/\/(?:posts?|articles?|blog)\/?$/i,
 	/\/article\/list\/\d+/i,
 	/\/category_\d+\.html$/i,
 	/\/page\/\d+\/?$/i,
@@ -73,6 +74,45 @@ const ARTICLE_HINTS = [
 	/\d{4}[-/]\d{1,2}[-/]\d{1,2}/,
 	/\/p\/\d+\.html$/i,
 	/\/article\/details\/\d+/i,
+]
+
+const FEED_DATE_TAGS = [
+	'pubDate',
+	'published',
+	'updated',
+	'created',
+	'date',
+	'dc:date',
+	'atom:published',
+	'atom:updated',
+]
+
+const PUBLISHED_META_FIELDS = [
+	['property', 'article:published_time'],
+	['property', 'og:published_time'],
+	['property', 'datePublished'],
+	['name', 'article:published_time'],
+	['name', 'datePublished'],
+	['name', 'publishdate'],
+	['name', 'publish_date'],
+	['name', 'pubdate'],
+	['name', 'date'],
+	['name', 'dc.date'],
+	['name', 'dc:date'],
+	['name', 'dcterms.created'],
+	['name', 'dcterms.date'],
+	['itemprop', 'datePublished'],
+	['itemprop', 'dateCreated'],
+]
+
+const MODIFIED_META_FIELDS = [
+	['property', 'article:modified_time'],
+	['property', 'og:updated_time'],
+	['property', 'dateModified'],
+	['name', 'dateModified'],
+	['name', 'lastmod'],
+	['name', 'last-modified'],
+	['itemprop', 'dateModified'],
 ]
 
 async function readSources() {
@@ -92,6 +132,16 @@ async function readSources() {
 		}))
 
 	return dedupeBy(sources, (source) => source.url)
+}
+
+async function readPreviousOutput() {
+	try {
+		const output = JSON.parse(await fs.readFile(OUTPUT_PATH, 'utf-8'))
+
+		return Array.isArray(output.posts) ? output : null
+	} catch {
+		return null
+	}
 }
 
 function normalizeUrl(value, baseUrl) {
@@ -266,14 +316,20 @@ async function collectSource(source, depth = 0) {
 
 			if (!looksLikeFeed(feed.text, feed.contentType)) continue
 
-			const posts = parseFeed(feed.text, feed.url, activeSource, fetchedAt)
+			const posts = await enrichPostsFromPages(
+				takeLimit(
+					parseFeed(feed.text, feed.url, activeSource, fetchedAt),
+					POSTS_PER_SOURCE,
+				),
+				activeSource,
+			)
 			if (posts.length > 0) {
 				return {
 					source: activeSource,
 					status: 'ok',
 					strategy: 'feed',
 					feedUrl: feed.url,
-					posts: takeLimit(posts, POSTS_PER_SOURCE),
+					posts,
 				}
 			}
 		} catch {
@@ -386,6 +442,7 @@ function extractLinkedBlogUrls(html, baseUrl) {
 			continue
 		}
 
+		if (isSuspiciousUrl(url)) continue
 		if (isSameSite(url, baseUrl)) continue
 
 		const parsedUrl = new URL(url)
@@ -436,11 +493,7 @@ function parseFeed(text, feedUrl, source, fetchedAt) {
 				cleanText(readXmlTag(block, 'link')) ||
 				readAtomLink(block) ||
 				cleanText(readXmlTag(block, 'guid'))
-			const publishedAt =
-				parseDate(readXmlTag(block, 'pubDate')) ??
-				parseDate(readXmlTag(block, 'published')) ??
-				parseDate(readXmlTag(block, 'updated')) ??
-				parseDate(readXmlTag(block, 'dc:date'))
+			const publishedAt = readFirstXmlDate(block, FEED_DATE_TAGS)
 
 			if (!title || !link) return null
 
@@ -501,6 +554,15 @@ function readXmlTag(block, tagName) {
 	return decodeHtml(match[1].replace(/^<!\[CDATA\[|\]\]>$/g, '').trim())
 }
 
+function readFirstXmlDate(block, tagNames) {
+	for (const tagName of tagNames) {
+		const date = parseDate(readXmlTag(block, tagName))
+		if (date) return date
+	}
+
+	return null
+}
+
 function readAtomLink(block) {
 	for (const match of block.matchAll(/<link\b[^>]*>/gi)) {
 		const attrs = parseAttributes(match[0])
@@ -513,6 +575,25 @@ function readAtomLink(block) {
 	}
 
 	return ''
+}
+
+async function enrichPostsFromPages(posts, source) {
+	return mapLimit(posts, 2, async (post) => {
+		if (post.publishedAt) return post
+
+		try {
+			const page = await fetchText(post.url)
+			const metadata = extractPageMetadata(page.text, source)
+
+			return {
+				...post,
+				title: metadata.title || post.title,
+				publishedAt: choosePublishedAt(post.publishedAt, metadata),
+			}
+		} catch {
+			return post
+		}
+	})
 }
 
 async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
@@ -532,6 +613,7 @@ async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
 			continue
 		}
 
+		if (isSuspiciousUrl(url) || isSamePageUrl(url, baseUrl)) continue
 		if (!isSameSite(url, baseUrl)) continue
 
 		const title = cleanText(attrs.get('title') ?? '') || cleanText(match[2])
@@ -561,9 +643,12 @@ async function extractHtmlPosts(html, baseUrl, source, fetchedAt) {
 		async (candidate) => {
 			try {
 				const page = await fetchText(candidate.url)
-				const pageTitle = extractPageTitle(page.text, source)
-				if (pageTitle) {
-					return { ...candidate, title: pageTitle }
+				const metadata = extractPageMetadata(page.text, source)
+
+				return {
+					...candidate,
+					title: metadata.title || candidate.title,
+					publishedAt: choosePublishedAt(candidate.publishedAt, metadata),
 				}
 			} catch {
 				// The homepage title is good enough when the article page blocks requests.
@@ -593,6 +678,30 @@ function isSameSite(value, baseUrl) {
 	const base = new URL(baseUrl)
 
 	return url.hostname === base.hostname
+}
+
+function isSamePageUrl(value, baseUrl) {
+	const url = new URL(value)
+	const base = new URL(baseUrl)
+
+	url.hash = ''
+	base.hash = ''
+
+	return normalizeUrl(url.toString()) === normalizeUrl(base.toString())
+}
+
+function isSuspiciousUrl(value) {
+	let decoded = value
+
+	try {
+		decoded = decodeURIComponent(value)
+	} catch {
+		// Keep the normalized value when percent decoding fails.
+	}
+
+	return /["<>`{}]|\$\{|\s\+\s|\b(?:articleUrl|highlightKeyword|slicesOfTitle)\b/.test(
+		decoded,
+	)
 }
 
 function isPlausibleTitle(title) {
@@ -689,10 +798,14 @@ async function collectSitemapPosts(homeUrl, source, fetchedAt) {
 	const resolvedEntries = await mapLimit(entries, 2, async (entry, rank) => {
 		const fallbackTitle = titleFromUrl(entry.loc)
 		let title = fallbackTitle
+		let publishedAt = entry.publishedAt
 
 		try {
 			const page = await fetchText(entry.loc)
-			title = extractPageTitle(page.text, source) || fallbackTitle
+			const metadata = extractPageMetadata(page.text, source)
+
+			title = metadata.title || fallbackTitle
+			publishedAt = choosePublishedAt(publishedAt, metadata)
 		} catch {
 			// URL-derived titles are an acceptable sitemap fallback.
 		}
@@ -703,7 +816,7 @@ async function collectSitemapPosts(homeUrl, source, fetchedAt) {
 			title,
 			url: entry.loc,
 			source,
-			publishedAt: entry.publishedAt,
+			publishedAt,
 			fetchedAt,
 			discoveredBy: 'sitemap',
 			rank,
@@ -773,6 +886,8 @@ function makePost({
 		return null
 	}
 
+	if (isSuspiciousUrl(normalizedUrl)) return null
+
 	return {
 		id: crypto
 			.createHash('sha1')
@@ -791,7 +906,8 @@ function makePost({
 	}
 }
 
-function extractPageTitle(html, source) {
+function extractPageMetadata(html, source) {
+	const dateMetadata = extractPageDateMetadata(html)
 	const metaTitle =
 		readMetaContent(html, 'property', 'og:title') ||
 		readMetaContent(html, 'name', 'twitter:title') ||
@@ -806,10 +922,25 @@ function extractPageTitle(html, source) {
 		cleanTitle === source.siteName ||
 		cleanTitle === source.name
 	) {
-		return ''
+		return {
+			title: '',
+			...dateMetadata,
+		}
 	}
 
-	return cleanTitle
+	return {
+		title: cleanTitle,
+		...dateMetadata,
+	}
+}
+
+function choosePublishedAt(currentPublishedAt, metadata) {
+	if (!metadata.publishedAt) return currentPublishedAt
+	if (!currentPublishedAt || metadata.dateConfidence === 'primary') {
+		return metadata.publishedAt
+	}
+
+	return currentPublishedAt
 }
 
 function readMetaContent(html, attrName, attrValue) {
@@ -821,6 +952,202 @@ function readMetaContent(html, attrName, attrValue) {
 	}
 
 	return ''
+}
+
+function extractPageDateMetadata(html) {
+	const primaryDate =
+		readFirstMetaDate(html, PUBLISHED_META_FIELDS) ??
+		extractJsonLdPublishedDate(html) ??
+		extractTimePublishedDate(html)
+	if (primaryDate) {
+		return {
+			publishedAt: primaryDate,
+			dateConfidence: 'primary',
+		}
+	}
+
+	const visibleDate = extractVisiblePublishedDate(html)
+	if (visibleDate) {
+		return {
+			publishedAt: visibleDate,
+			dateConfidence: 'visible',
+		}
+	}
+
+	const modifiedDate =
+		readFirstMetaDate(html, MODIFIED_META_FIELDS) ??
+		extractVisibleModifiedDate(html)
+	if (modifiedDate) {
+		return {
+			publishedAt: modifiedDate,
+			dateConfidence: 'modified',
+		}
+	}
+
+	return {
+		publishedAt: null,
+		dateConfidence: 'none',
+	}
+}
+
+function readFirstMetaDate(html, fields) {
+	for (const [attrName, attrValue] of fields) {
+		const date = parseDate(readMetaContent(html, attrName, attrValue))
+		if (date) return date
+	}
+
+	return null
+}
+
+function extractJsonLdPublishedDate(html) {
+	const primaryDates = []
+	const fallbackDates = []
+
+	for (const match of html.matchAll(
+		/<script\b([^>]*)>([\s\S]*?)<\/script>/gi,
+	)) {
+		const attrs = parseAttributes(`<script ${match[1]}>`)
+		const type = attrs.get('type') ?? ''
+		if (!/ld\+json/i.test(type)) continue
+
+		try {
+			collectJsonLdDates(
+				JSON.parse(decodeHtml(match[2]).trim()),
+				false,
+				primaryDates,
+				fallbackDates,
+			)
+		} catch {
+			// Malformed structured data should not block the rest of the page.
+		}
+	}
+
+	return parseFirstDate(primaryDates) ?? parseFirstDate(fallbackDates)
+}
+
+function collectJsonLdDates(
+	value,
+	isArticleScope,
+	primaryDates,
+	fallbackDates,
+) {
+	if (!value) return
+
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			collectJsonLdDates(item, isArticleScope, primaryDates, fallbackDates)
+		}
+		return
+	}
+
+	if (typeof value !== 'object') return
+
+	const currentIsArticle =
+		isArticleScope || isArticleStructuredDataType(value['@type'])
+	const primaryKeys = ['datePublished', 'dateCreated']
+	const fallbackKeys = ['dateModified', 'dateUpdated', 'updated']
+
+	for (const key of primaryKeys) {
+		if (typeof value[key] === 'string') {
+			;(currentIsArticle ? primaryDates : fallbackDates).push(value[key])
+		}
+	}
+
+	for (const key of fallbackKeys) {
+		if (typeof value[key] === 'string') {
+			fallbackDates.push(value[key])
+		}
+	}
+
+	for (const child of Object.values(value)) {
+		if (child && typeof child === 'object') {
+			collectJsonLdDates(child, currentIsArticle, primaryDates, fallbackDates)
+		}
+	}
+}
+
+function isArticleStructuredDataType(value) {
+	const values = Array.isArray(value) ? value : [value]
+
+	return values.some(
+		(type) =>
+			typeof type === 'string' &&
+			/(article|blogposting|newsarticle|techarticle|posting)/i.test(type),
+	)
+}
+
+function extractTimePublishedDate(html) {
+	const fallbackDates = []
+
+	for (const match of html.matchAll(/<time\b([^>]*)>([\s\S]*?)<\/time>/gi)) {
+		const attrs = parseAttributes(`<time ${match[1]}>`)
+		const haystack = [
+			attrs.get('class'),
+			attrs.get('id'),
+			attrs.get('itemprop'),
+			attrs.get('property'),
+			attrs.get('title'),
+			cleanText(match[2]),
+		]
+			.filter(Boolean)
+			.join(' ')
+		const date =
+			parseDate(attrs.get('datetime')) ??
+			parseDate(attrs.get('content')) ??
+			parseDate(attrs.get('title')) ??
+			parseDate(match[2])
+
+		if (!date) continue
+		if (
+			/(publish|published|created|datepublished|发表于|发布于)/i.test(haystack)
+		) {
+			return date
+		}
+		if (!/(modify|modified|updated|datemodified|更新于)/i.test(haystack)) {
+			fallbackDates.push(date)
+		}
+	}
+
+	return fallbackDates[0] ?? null
+}
+
+function extractVisiblePublishedDate(html) {
+	const text = cleanText(html)
+	const patterns = [
+		/(?:发表于|发布于|发布日期|创建于)\s*[:：]?\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}(?:日)?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?)/i,
+		/(?:published|posted|created)(?:\s+on)?\s*[:：]?\s*(\d{4}[-/.]\d{1,2}[-/.]\d{1,2}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?)/i,
+	]
+
+	for (const pattern of patterns) {
+		const date = parseDate(text.match(pattern)?.[1])
+		if (date) return date
+	}
+
+	return null
+}
+
+function extractVisibleModifiedDate(html) {
+	const text = cleanText(html)
+	const patterns = [
+		/(?:更新于|最后更新)\s*[:：]?\s*(\d{4}[-/.年]\d{1,2}[-/.月]\d{1,2}(?:日)?(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?)/i,
+		/(?:last updated|updated(?:\s+on)?|modified(?:\s+on)?)\s*[:：]?\s*([A-Z][a-z]{2,8}\s+\d{1,2},\s+\d{4}(?:,?\s+\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)?|\d{1,2}\/\d{1,2}\/\d{4}(?:,\s*\d{1,2}:\d{2}(?::\d{2})?\s*(?:AM|PM)?)?|\d{4}[-/.]\d{1,2}[-/.]\d{1,2}(?:\s+\d{1,2}:\d{2}(?::\d{2})?)?)/i,
+	]
+
+	for (const pattern of patterns) {
+		const date = parseDate(text.match(pattern)?.[1])
+		if (date) return date
+	}
+
+	return null
+}
+
+function parseFirstDate(values) {
+	for (const value of values) {
+		const date = parseDate(value)
+		if (date) return date
+	}
+
+	return null
 }
 
 function isUsefulSitemapTitle(title, fallbackTitle, source) {
@@ -874,8 +1201,39 @@ function decodeHtml(value) {
 function parseDate(value) {
 	if (!value) return null
 
-	const date = new Date(decodeHtml(value).trim())
-	return Number.isNaN(date.getTime()) ? null : date.toISOString()
+	const normalized = cleanText(value)
+		.replace(/^(?:发表于|发布于|发布日期|创建于|更新于)\s*[:：]?\s*/i, '')
+		.trim()
+	if (!normalized) return null
+
+	const timestampMatch = normalized.match(/^\d{10,13}$/)
+	if (timestampMatch) {
+		const timestamp = Number(timestampMatch[0])
+		const date = new Date(
+			timestampMatch[0].length === 10 ? timestamp * 1000 : timestamp,
+		)
+
+		return Number.isNaN(date.getTime()) ? null : date.toISOString()
+	}
+
+	const date = new Date(normalized)
+	if (!Number.isNaN(date.getTime())) {
+		return date.toISOString()
+	}
+
+	const explicitMatch = normalized.match(
+		/(\d{4})[-/.年]\s*(\d{1,2})[-/.月]\s*(\d{1,2})(?:日)?(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/,
+	)
+	if (!explicitMatch) return null
+
+	return makeIsoDateTime(
+		Number(explicitMatch[1]),
+		Number(explicitMatch[2]),
+		Number(explicitMatch[3]),
+		Number(explicitMatch[4] ?? 0),
+		Number(explicitMatch[5] ?? 0),
+		Number(explicitMatch[6] ?? 0),
+	)
 }
 
 function inferDateFromUrl(value) {
@@ -897,13 +1255,26 @@ function inferDateFromUrl(value) {
 }
 
 function makeIsoDate(year, month, day) {
+	return makeIsoDateTime(year, month, day, 0, 0, 0)
+}
+
+function makeIsoDateTime(year, month, day, hour, minute, second) {
 	const date = new Date(Date.UTC(year, month - 1, day))
 	const isValid =
 		date.getUTCFullYear() === year &&
 		date.getUTCMonth() === month - 1 &&
-		date.getUTCDate() === day
+		date.getUTCDate() === day &&
+		hour >= 0 &&
+		hour <= 23 &&
+		minute >= 0 &&
+		minute <= 59 &&
+		second >= 0 &&
+		second <= 59
 
-	return isValid ? date.toISOString() : null
+	if (!isValid) return null
+
+	date.setUTCHours(hour, minute, second, 0)
+	return date.toISOString()
 }
 
 function titleFromUrl(value) {
@@ -991,6 +1362,35 @@ function filterRecentResult(result) {
 	}
 }
 
+function applyStaleFallback(result, previousOutput) {
+	if (result.status !== 'error') return result
+
+	const posts = getPreviousSourcePosts(previousOutput, result.source).filter(
+		(post) => post.publishedAt && isRecentPost(post),
+	)
+	if (posts.length === 0) return result
+
+	return {
+		...result,
+		status: 'stale',
+		strategy: `stale-${result.strategy}`,
+		error: `${result.error}; using previous successful posts.`,
+		posts,
+	}
+}
+
+function getPreviousSourcePosts(previousOutput, source) {
+	if (!previousOutput) return []
+
+	return previousOutput.posts.filter(
+		(post) =>
+			post.sourceUrl === source.url ||
+			post.sourceSiteName === source.siteName ||
+			post.sourceName === source.name,
+	)
+}
+
+const previousOutput = await readPreviousOutput()
 const sources = await readSources()
 console.log(`Collecting posts from ${sources.length} blog sources...`)
 if (MIN_POST_TIME) {
@@ -1001,7 +1401,9 @@ if (MIN_POST_TIME) {
 
 const results = (
 	await mapLimit(sources, CONCURRENCY, (source) => collectSource(source))
-).map(filterRecentResult)
+)
+	.map((result) => applyStaleFallback(result, previousOutput))
+	.map(filterRecentResult)
 const generatedAt = new Date().toISOString()
 const posts = takeLimit(
 	sortPosts(
@@ -1015,12 +1417,16 @@ const posts = takeLimit(
 
 const output = {
 	crawl: {
-		minPostDate: MIN_POST_TIME ? MIN_POST_DATE.toISOString().slice(0, 10) : null,
+		minPostDate: MIN_POST_TIME
+			? MIN_POST_DATE.toISOString().slice(0, 10)
+			: null,
 		recentYears: process.env.MIN_POST_DATE ? null : RECENT_YEARS,
 	},
 	generatedAt,
 	sourceCount: sources.length,
-	okSourceCount: results.filter((result) => result.status === 'ok').length,
+	okSourceCount: results.filter((result) =>
+		['ok', 'stale'].includes(result.status),
+	).length,
 	posts,
 	sources: results.map((result) => ({
 		name: result.source.name,
@@ -1052,3 +1458,5 @@ for (const result of results) {
 console.log(
 	`Wrote ${posts.length} posts to ${path.relative(ROOT_DIR, OUTPUT_PATH)}`,
 )
+
+process.exit(0)

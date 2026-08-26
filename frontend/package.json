@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": "vite dev",
 		"collect:github-activity": "node ../scripts/collect-github-activity.mjs",
-		"collect:posts": "node ../scripts/collect-blog-posts.mjs",
+		"collect:posts": "NODE_USE_ENV_PROXY=1 node ../scripts/collect-blog-posts.mjs",
 		"collect:site-stats": "node ../scripts/collect-site-stats.mjs",
 		"generate:readme": "node ../scripts/generate-readme.mjs",
 		"validate:data": "node ../scripts/validate-data.mjs",

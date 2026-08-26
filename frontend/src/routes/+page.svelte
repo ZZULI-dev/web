@@ -291,6 +291,8 @@ function sourceStatusLabel(status: string): string {
 			return '未发现'
 		case 'error':
 			return '失败'
+		case 'stale':
+			return '沿用上次'
 		default:
 			return status
 	}
