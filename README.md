@@ -1,6 +1,8 @@
 ## ZZULI.dev
 
-收集所有 ZZULI 开发者校友信息，GitHub、项目、博客等，看看大家都在干什么。2.0 版本已经震撼发布 🎉
+收集所有 ZZULI 开发者校友信息，GitHub、项目、博客等，看看大家都在干什么。
+
+2.0 版本已经震撼发布 🎉
 
 ![banner](./banner/banner.webp)
 
