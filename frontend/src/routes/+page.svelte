@@ -611,6 +611,7 @@ function sourceStatusLabel(status: string): string {
 								<span>{item.label} {formatMetric(item.value)}</span>
 							</span>
 						{/each}
+						<span>(&larr;每日更新)</span>
 					</div>
 				{/if}
 				<nav class="flex flex-wrap items-center gap-x-1.5 gap-y-1" aria-label="站点链接">
