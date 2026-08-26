@@ -60,7 +60,7 @@ https://zzuli.dev
 | Charles          | [Charles-IX](https://github.com/Charles-IX)             |                                                |
 | RaXianch         | [DeSireFire](https://github.com/DeSireFire)             |                                                |
 | Sleepwf          | [Games55k](https://github.com/Games55k)                 | [Hi, this is Sleepwf](https://blog.sleepwf.dev/)|
-| vow              | [vow0328](https://github.com/vow0328)                   | [vow0328](https://vow0328.github.io/)          |
+| vow              | [vow0328](https://github.com/vow0328)                   | [微光拾级](https://vow0328.github.io/)          |
 | Dang Wenliang    | [fookwood](https://github.com/fookwood)                 | [闷瓜蛋子](https://fookwood.com/)              |
 | GlassSky01       | [GlassSky01](https://github.com/GlassSky01)             |                                                |
 | Dogxi            | [dogxii](https://github.com/dogxii)                     | [狗窝子](https://blog.dogxi.me/)               |
