@@ -1,5 +1,5 @@
 export const ACTIVITY_PERIODS = [
-	{ days: 1, homeLabel: '今天', key: 'today', label: '今天' },
+	{ days: 1, homeLabel: '昨日', key: 'yesterday', label: '昨日' },
 	{ days: 7, homeLabel: '近 7 天', key: '7d', label: '7 天' },
 	{ days: 30, homeLabel: '近 30 天', key: '30d', label: '30 天' },
 	{ days: 90, homeLabel: '近 90 天', key: '90d', label: '90 天' },
@@ -28,8 +28,7 @@ type ActivityAlumni = {
 
 export function getActivityPeriod(key: ActivityPeriodKey) {
 	return (
-		ACTIVITY_PERIODS.find((period) => period.key === key) ??
-		ACTIVITY_PERIODS[1]
+		ACTIVITY_PERIODS.find((period) => period.key === key) ?? ACTIVITY_PERIODS[1]
 	)
 }
 

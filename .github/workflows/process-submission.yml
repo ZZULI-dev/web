@@ -1,0 +1,330 @@
+name: 处理收录申请
+
+run-name: ${{ github.event.issue.title }} (${{ github.event.label.name }})
+
+on:
+  issues:
+    types: [labeled]
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  handle-submission:
+    if: |
+      (github.event.label.name == 'approved' || github.event.label.name == 'rejected') &&
+      (contains(github.event.issue.labels.*.name, 'alumni-submission') || contains(github.event.issue.labels.*.name, 'project-submission'))
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Resolve submission
+        id: submission
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.issue.labels.map((label) => label.name)
+            const type = labels.includes('alumni-submission') ? 'alumni' : 'project'
+
+            core.setOutput('type', type)
+            core.setOutput('decision', context.payload.label.name)
+            core.setOutput('issue_number', context.payload.issue.number)
+
+      - name: Checkout
+        if: steps.submission.outputs.decision == 'approved'
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        if: steps.submission.outputs.decision == 'approved'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Parse alumni issue
+        id: parse_alumni
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'alumni'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue
+            const body = issue.body ?? ''
+            const emptyAnswer = /^_No response_$/i
+            const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const readAnswer = (label) => {
+              const pattern = new RegExp(`### ${escapeRegExp(label)}\\s*\\n+([\\s\\S]*?)(?=\\n### |$)`)
+              const value = body.match(pattern)?.[1].trim() ?? ''
+              return emptyAnswer.test(value) ? '' : value
+            }
+            const normalizeGitHubUsername = (value) => value
+              .trim()
+              .replace(/^@/, '')
+              .replace(/^https?:\/\/github\.com\//i, '')
+              .replace(/[/?#].*$/, '')
+
+            const nickname = readAnswer('昵称')
+            const githubUser = normalizeGitHubUsername(readAnswer('GitHub 用户名'))
+            const blogUrl = readAnswer('博客/主页（可选）') || readAnswer('博客地址（可选）')
+            const blogName = readAnswer('博客名称（可选）') || nickname
+
+            if (!nickname || !githubUser) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '解析失败：缺少昵称或 GitHub 用户名。'
+              })
+              core.setFailed('Missing required fields')
+              return
+            }
+
+            if (blogUrl) {
+              try {
+                const url = new URL(blogUrl)
+                if (!/^https?:$/.test(url.protocol)) throw new Error('invalid protocol')
+              } catch {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: '博客/主页地址格式不正确，请使用 http(s) URL。'
+                })
+                core.setFailed('Invalid blog URL')
+                return
+              }
+            }
+
+            try {
+              await github.rest.users.getByUsername({ username: githubUser })
+            } catch {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `GitHub 用户名 \`${githubUser}\` 不存在，请检查。`
+              })
+              core.setFailed('Invalid GitHub username')
+              return
+            }
+
+            core.setOutput('nickname', nickname)
+            core.setOutput('github_user', githubUser)
+            core.setOutput('blog_url', blogUrl)
+            core.setOutput('blog_name', blogName)
+
+      - name: Upsert alumni data
+        id: upsert_alumni
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'alumni'
+        env:
+          NICKNAME: ${{ steps.parse_alumni.outputs.nickname }}
+          GITHUB_USERNAME: ${{ steps.parse_alumni.outputs.github_user }}
+          BLOG_URL: ${{ steps.parse_alumni.outputs.blog_url }}
+          BLOG_NAME: ${{ steps.parse_alumni.outputs.blog_name }}
+        run: node scripts/apply-submission.mjs alumni
+
+      - name: Parse project issue
+        id: parse_project
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'project'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issue = context.payload.issue
+            const body = issue.body ?? ''
+            const emptyAnswer = /^_No response_$/i
+            const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+            const readAnswer = (label) => {
+              const pattern = new RegExp(`### ${escapeRegExp(label)}\\s*\\n+([\\s\\S]*?)(?=\\n### |$)`)
+              const value = body.match(pattern)?.[1].trim() ?? ''
+              return emptyAnswer.test(value) ? '' : value
+            }
+            const normalizeGitHubUsername = (value) => value
+              .trim()
+              .replace(/^@/, '')
+              .replace(/^https?:\/\/github\.com\//i, '')
+              .replace(/[/?#].*$/, '')
+            const inferGitHubOwner = (projectUrl) => {
+              try {
+                const url = new URL(projectUrl)
+                if (url.hostname.toLowerCase() !== 'github.com') return ''
+                return normalizeGitHubUsername(url.pathname.split('/').filter(Boolean)[0] ?? '')
+              } catch {
+                return ''
+              }
+            }
+
+            const projectName = readAnswer('项目名称')
+            const authorGithub = normalizeGitHubUsername(readAnswer('作者 GitHub（可选）'))
+            const projectUrl = readAnswer('项目链接')
+            const description = readAnswer('项目简介')
+            const languages = readAnswer('主要语言（可选）')
+
+            if (!projectName || !projectUrl || !description) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '解析失败：缺少项目名称、项目链接或项目简介。'
+              })
+              core.setFailed('Missing required fields')
+              return
+            }
+
+            try {
+              const url = new URL(projectUrl)
+              if (!/^https?:$/.test(url.protocol)) throw new Error('invalid protocol')
+            } catch {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '项目链接格式不正确，请使用 http(s) URL。'
+              })
+              core.setFailed('Invalid project URL')
+              return
+            }
+
+            const githubUserToCheck = authorGithub || inferGitHubOwner(projectUrl)
+            if (githubUserToCheck) {
+              try {
+                await github.rest.users.getByUsername({ username: githubUserToCheck })
+              } catch {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: issue.number,
+                  body: `GitHub 用户名 \`${githubUserToCheck}\` 不存在，请检查。`
+                })
+                core.setFailed('Invalid GitHub username')
+                return
+              }
+            }
+
+            core.setOutput('project_name', projectName)
+            core.setOutput('author_github', authorGithub)
+            core.setOutput('project_url', projectUrl)
+            core.setOutput('description', description)
+            core.setOutput('languages', languages)
+
+      - name: Upsert project data
+        id: upsert_project
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'project'
+        env:
+          PROJECT_NAME: ${{ steps.parse_project.outputs.project_name }}
+          AUTHOR_GITHUB: ${{ steps.parse_project.outputs.author_github }}
+          PROJECT_URL: ${{ steps.parse_project.outputs.project_url }}
+          DESCRIPTION: ${{ steps.parse_project.outputs.description }}
+          LANGUAGES: ${{ steps.parse_project.outputs.languages }}
+        run: node scripts/apply-submission.mjs project
+
+      - name: Validate data
+        if: steps.submission.outputs.decision == 'approved'
+        run: npm --prefix frontend run validate:data
+
+      - name: Generate README
+        if: steps.submission.outputs.decision == 'approved'
+        run: node scripts/generate-readme.mjs
+
+      - name: Collect blog posts
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'alumni'
+        run: npm --prefix frontend run collect:posts
+        continue-on-error: true
+
+      - name: Commit and push alumni changes
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'alumni'
+        env:
+          COMMIT_SUBJECT: ${{ steps.upsert_alumni.outputs.commit_subject }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/alumni.json README.md data/blog-posts.json
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: ${COMMIT_SUBJECT}"
+          git push
+
+      - name: Commit and push project changes
+        if: steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'project'
+        env:
+          COMMIT_SUBJECT: ${{ steps.upsert_project.outputs.commit_subject }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/projects.json README.md
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            exit 0
+          fi
+          git commit -m "feat: ${COMMIT_SUBJECT}"
+          git push
+
+      - name: Close approved alumni issue
+        if: success() && steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'alumni'
+        uses: actions/github-script@v7
+        env:
+          BLOG_URL: ${{ steps.parse_alumni.outputs.blog_url }}
+          ISSUE_NUMBER: ${{ steps.submission.outputs.issue_number }}
+          SUMMARY: ${{ steps.upsert_alumni.outputs.summary }}
+        with:
+          script: |
+            const blogLine = process.env.BLOG_URL ? `\n博客：${process.env.BLOG_URL}` : ''
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              body: `${process.env.SUMMARY}成功。${blogLine}\n\n稍后会展示在 ZZULI.dev。`
+            })
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              state: 'closed'
+            })
+
+      - name: Close approved project issue
+        if: success() && steps.submission.outputs.decision == 'approved' && steps.submission.outputs.type == 'project'
+        uses: actions/github-script@v7
+        env:
+          ISSUE_NUMBER: ${{ steps.submission.outputs.issue_number }}
+          SUMMARY: ${{ steps.upsert_project.outputs.summary }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              body: `${process.env.SUMMARY}成功。\n\n稍后会展示在 ZZULI.dev。`
+            })
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: Number(process.env.ISSUE_NUMBER),
+              state: 'closed'
+            })
+
+      - name: Close rejected issue
+        if: steps.submission.outputs.decision == 'rejected'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const type = '${{ steps.submission.outputs.type }}'
+            const body = type === 'project'
+              ? '这次项目申请未通过审核。如需补充信息，可以重新提交。'
+              : '这次申请未通过审核。如需补充信息，可以重新提交。'
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body
+            })
+
+            await github.rest.issues.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              state: 'closed'
+            })

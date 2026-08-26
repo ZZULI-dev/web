@@ -150,7 +150,7 @@ rateLimit {
 }`
 }
 
-function toActivityMember(user, requestedGithub, recentFromKey, todayKey) {
+function toActivityMember(user, requestedGithub, recentFromKey, latestDateKey) {
 	const calendar =
 		user.contributionsCollection?.contributionCalendar?.weeks
 			?.flatMap((week) => week.contributionDays ?? [])
@@ -161,10 +161,11 @@ function toActivityMember(user, requestedGithub, recentFromKey, todayKey) {
 				color: day.color ?? '#ebedf0',
 			}))
 			?.sort((a, b) => a.date.localeCompare(b.date)) ?? []
-	const todayContributions =
-		calendar.find((day) => day.date === todayKey)?.count ?? 0
-	const recentContributions = calendar
-		.filter((day) => day.date >= recentFromKey && day.date <= todayKey)
+	const completedCalendar = calendar.filter((day) => day.date <= latestDateKey)
+	const latestDayContributions =
+		completedCalendar.find((day) => day.date === latestDateKey)?.count ?? 0
+	const recentContributions = completedCalendar
+		.filter((day) => day.date >= recentFromKey && day.date <= latestDateKey)
 		.reduce((sum, day) => sum + day.count, 0)
 	const recentRepositories =
 		user.repositories?.nodes
@@ -189,14 +190,15 @@ function toActivityMember(user, requestedGithub, recentFromKey, todayKey) {
 		name: user.name ?? null,
 		url: user.url ?? `https://github.com/${requestedGithub}`,
 		avatar: user.avatarUrl ?? `https://github.com/${requestedGithub}.png`,
-		todayContributions,
+		latestDayContributions,
 		recentContributions,
-		totalContributions:
-			user.contributionsCollection?.contributionCalendar
-				?.totalContributions ?? 0,
+		totalContributions: completedCalendar.reduce(
+			(sum, day) => sum + day.count,
+			0,
+		),
 		calendar: {
-			start: calendar[0]?.date ?? null,
-			counts: calendar.map((day) => day.count),
+			start: completedCalendar[0]?.date ?? null,
+			counts: completedCalendar.map((day) => day.count),
 		},
 		recentRepositories,
 	}
@@ -210,9 +212,10 @@ async function collect() {
 
 	const alumni = await readAlumni()
 	const now = new Date()
-	const from = addUtcDays(now, -370)
-	const recentFrom = addUtcDays(now, -(RECENT_DAYS - 1))
-	const todayKey = toDateKey(now)
+	const latestDate = addUtcDays(now, -1)
+	const from = addUtcDays(latestDate, -370)
+	const recentFrom = addUtcDays(latestDate, -(RECENT_DAYS - 1))
+	const latestDateKey = toDateKey(latestDate)
 	const recentFromKey = toDateKey(recentFrom)
 	const members = []
 
@@ -230,7 +233,7 @@ async function collect() {
 			}
 
 			members.push(
-				toActivityMember(user, person.github, recentFromKey, todayKey),
+				toActivityMember(user, person.github, recentFromKey, latestDateKey),
 			)
 		}
 
@@ -245,7 +248,7 @@ async function collect() {
 		generatedAt: now.toISOString(),
 		range: {
 			from: toDateKey(from),
-			to: todayKey,
+			to: latestDateKey,
 			recentDays: RECENT_DAYS,
 		},
 		members,

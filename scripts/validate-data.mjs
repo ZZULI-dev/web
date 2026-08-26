@@ -277,7 +277,10 @@ function validateGitHubActivity() {
 		if (!isNonEmptyString(member.avatar) || !isHttpUrl(member.avatar)) {
 			addError(pathLabel, `avatar 必须是 http(s) URL: ${member.avatar ?? ''}`);
 		}
-		validateNullableCount(member.todayContributions, `${pathLabel}.todayContributions`);
+		validateNullableCount(
+			member.latestDayContributions ?? member.todayContributions,
+			`${pathLabel}.latestDayContributions`,
+		);
 		validateNullableCount(member.recentContributions, `${pathLabel}.recentContributions`);
 		validateNullableCount(member.totalContributions, `${pathLabel}.totalContributions`);
 		validateGitHubCalendar(member.calendar, `${pathLabel}.calendar`);

@@ -86,7 +86,7 @@ export type GitHubActivityMember = {
 	name: string | null
 	url: string
 	avatar: string
-	todayContributions: number
+	latestDayContributions: number
 	recentContributions: number
 	totalContributions: number
 	calendar: GitHubActivityDay[]
@@ -143,8 +143,13 @@ type RawGitHubActivityCalendar =
 			counts?: number[]
 			colors?: string[]
 	  }
-type RawGitHubActivityMember = Omit<GitHubActivityMember, 'calendar'> & {
+type RawGitHubActivityMember = Omit<
+	GitHubActivityMember,
+	'calendar' | 'latestDayContributions'
+> & {
 	calendar?: RawGitHubActivityCalendar
+	latestDayContributions?: number
+	todayContributions?: number
 }
 
 type LoadSiteDataOptions = {
@@ -525,9 +530,17 @@ function normalizeGitHubActivityCalendar(
 function normalizeGitHubActivityMember(
 	member: RawGitHubActivityMember,
 ): GitHubActivityMember {
+	const {
+		calendar,
+		latestDayContributions,
+		todayContributions,
+		...normalizedMember
+	} = member
+
 	return {
-		...member,
-		calendar: normalizeGitHubActivityCalendar(member.calendar),
+		...normalizedMember,
+		latestDayContributions: latestDayContributions ?? todayContributions ?? 0,
+		calendar: normalizeGitHubActivityCalendar(calendar),
 	}
 }
 

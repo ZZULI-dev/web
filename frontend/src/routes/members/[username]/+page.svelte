@@ -1,7 +1,12 @@
 <script lang="ts">
-import { onMount } from 'svelte'
+import { onDestroy, onMount } from 'svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
+import {
+	downloadProfileCard,
+	type ProfileCardEntry,
+	type ProfileCardMetric,
+} from '$lib/profile-card'
 import { SITE_ORIGIN } from '$lib/site'
 import {
 	getSavedThemeMode,
@@ -17,6 +22,12 @@ let { data }: { data: PageData } = $props()
 
 let themeMode = $state<ThemeMode>('auto')
 let resolvedTheme = $state<ResolvedTheme>('light')
+let copiedProfileUrl = $state(false)
+let isExportingProfileImage = $state(false)
+let profileActionMessage = $state('')
+let profileActionTimer: ReturnType<typeof setTimeout> | null = null
+
+let profileUrl = $derived(`${SITE_ORIGIN}${data.person.profilePath}`)
 
 onMount(() => {
 	themeMode = getSavedThemeMode()
@@ -29,10 +40,143 @@ onMount(() => {
 	})
 })
 
+onDestroy(clearProfileActionTimer)
+
 function setThemeMode(mode: ThemeMode) {
 	themeMode = mode
 	resolvedTheme = resolveThemeMode(mode)
 	saveThemeMode(mode)
+}
+
+async function copyProfileLink() {
+	try {
+		await copyText(profileUrl)
+		showProfileActionMessage('已复制', true)
+	} catch (error) {
+		console.error('Failed to copy profile link:', error)
+		showProfileActionMessage('复制失败')
+	}
+}
+
+async function exportProfileImage() {
+	if (isExportingProfileImage) return
+
+	isExportingProfileImage = true
+
+	try {
+		await downloadProfileCard({
+			avatarUrl: getProfileCardAvatarUrl(data.person.github.username),
+			blogUrl: data.person.blog?.url,
+			contributionCalendar: data.activity?.calendar,
+			githubUsername: data.person.github.username,
+			metrics: getProfileCardMetrics(),
+			nickname: data.person.nickname,
+			posts: getProfileCardPosts(),
+			projects: getProfileCardProjects(),
+		})
+		showProfileActionMessage('已导出')
+	} catch (error) {
+		console.error('Failed to export profile image:', error)
+		showProfileActionMessage('导出失败')
+	} finally {
+		isExportingProfileImage = false
+	}
+}
+
+async function copyText(value: string) {
+	if (navigator.clipboard?.writeText && window.isSecureContext) {
+		await navigator.clipboard.writeText(value)
+		return
+	}
+
+	const textarea = document.createElement('textarea')
+	textarea.value = value
+	textarea.setAttribute('readonly', '')
+	textarea.style.position = 'fixed'
+	textarea.style.opacity = '0'
+	document.body.append(textarea)
+	textarea.select()
+
+	const copied = document.execCommand('copy')
+	textarea.remove()
+
+	if (!copied) {
+		throw new Error('Copy failed')
+	}
+}
+
+function getProfileCardMetrics(): ProfileCardMetric[] {
+	return [
+		{
+			label: data.activity ? '昨日贡献' : 'GitHub',
+			value: data.activity
+				? formatMetric(data.activity.latestDayContributions)
+				: `@${data.person.github.username}`,
+		},
+		{
+			label: data.activity ? `近 ${data.activity.range.recentDays} 天` : '博客',
+			value: data.activity
+				? formatMetric(data.activity.recentContributions)
+				: data.person.blog
+					? '已收录'
+					: '未收录',
+		},
+		{
+			label: data.activity ? '近一年贡献' : '贡献',
+			value: data.activity
+				? formatMetric(data.activity.totalContributions)
+				: '等待采集',
+		},
+		{
+			label: '项目',
+			value: formatMetric(data.projects.length),
+		},
+		{
+			label: '文章',
+			value: formatMetric(data.posts.length),
+		},
+	]
+}
+
+function getProfileCardProjects(): ProfileCardEntry[] {
+	return data.projects.slice(0, 3).map((project) => ({
+		badge: project.languages[0]
+			? {
+					color: project.languages[0].color,
+					label: project.languages[0].name,
+				}
+			: undefined,
+		title: project.name,
+	}))
+}
+
+function getProfileCardPosts(): ProfileCardEntry[] {
+	return data.posts.slice(0, 4).map((post) => ({
+		meta: formatPostDate(post.publishedAt),
+		title: post.title,
+	}))
+}
+
+function getProfileCardAvatarUrl(username: string) {
+	return `https://avatars.githubusercontent.com/${encodeURIComponent(username)}?s=312`
+}
+
+function showProfileActionMessage(message: string, copied = false) {
+	clearProfileActionTimer()
+	copiedProfileUrl = copied
+	profileActionMessage = message
+	profileActionTimer = setTimeout(() => {
+		copiedProfileUrl = false
+		profileActionMessage = ''
+		profileActionTimer = null
+	}, 1800)
+}
+
+function clearProfileActionTimer() {
+	if (profileActionTimer) {
+		clearTimeout(profileActionTimer)
+		profileActionTimer = null
+	}
 }
 
 function formatProjectDate(value: string | null): string {
@@ -75,7 +219,53 @@ function contributionTitle(
 
 	<main class="mx-auto max-w-4xl space-y-5 px-4 py-5 sm:px-6">
 		<section class="overflow-hidden rounded-2xl bg-white shadow-[0_1px_3px_rgba(31,35,40,0.08)] dark:bg-[#15191f] dark:shadow-[0_1px_3px_rgba(0,0,0,0.35)]">
-			<div class="flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center">
+			<div class="relative flex flex-col gap-4 px-5 py-5 sm:flex-row sm:items-center">
+				<div class="absolute right-4 top-4 flex items-center gap-2">
+					<button
+						type="button"
+						onclick={exportProfileImage}
+						disabled={isExportingProfileImage}
+						class="flex h-8 w-8 items-center justify-center rounded-full text-[#57606a] transition-colors hover:text-[#0969da] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd3fc] disabled:cursor-wait disabled:opacity-70 dark:text-[#9aa4b2] dark:hover:text-[#7cc4ff]"
+						aria-label="导出个人资料图"
+						title={isExportingProfileImage ? '导出中' : '导出图片'}
+					>
+						{#if isExportingProfileImage}
+							<svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path d="M21 12a9 9 0 1 1-6.22-8.56" stroke="currentColor" stroke-width="2" stroke-linecap="round"></path>
+							</svg>
+						{:else}
+							<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="2"></rect>
+								<circle cx="9" cy="9" r="2" stroke="currentColor" stroke-width="2"></circle>
+								<path d="m21 15-3.09-3.09a2 2 0 0 0-2.82 0L6 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						{/if}
+					</button>
+					<button
+						type="button"
+						onclick={copyProfileLink}
+						class="flex h-8 w-8 items-center justify-center rounded-full text-[#57606a] transition-colors hover:text-[#0969da] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#7dd3fc] dark:text-[#9aa4b2] dark:hover:text-[#7cc4ff]"
+						aria-label="复制成员主页链接"
+						title="复制链接"
+					>
+						{#if copiedProfileUrl}
+							<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path d="M20 6 9 17l-5-5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						{:else}
+							<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+								<path d="M9 17H7A5 5 0 0 1 7 7h2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+								<path d="M15 7h2a5 5 0 1 1 0 10h-2" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+								<path d="M8 12h8" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+							</svg>
+						{/if}
+					</button>
+					{#if profileActionMessage}
+						<span class="absolute right-0 top-10 whitespace-nowrap rounded-full bg-[#24292f] px-2 py-1 text-xs font-medium text-white shadow-lg dark:bg-[#e8eaed] dark:text-[#111418]" aria-live="polite">
+							{profileActionMessage}
+						</span>
+					{/if}
+				</div>
 				<img
 					src={data.person.avatar}
 					alt={data.person.nickname}
@@ -84,7 +274,7 @@ function contributionTitle(
 					decoding="async"
 					referrerpolicy="no-referrer"
 				/>
-				<div class="min-w-0 flex-1">
+				<div class="min-w-0 flex-1 pr-20 sm:pr-24">
 					<h1 class="truncate text-2xl font-semibold">{data.person.nickname}</h1>
 					<p class="mt-1 text-sm text-[#6b7280] dark:text-[#9aa4b2]">
 						@{data.person.github.username}
@@ -125,8 +315,8 @@ function contributionTitle(
 				<div class="px-4 py-4">
 					<div class="grid grid-cols-3 gap-4 text-sm">
 						<div>
-							<p class="text-lg font-semibold">{formatMetric(data.activity.todayContributions)}</p>
-							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">今日</p>
+							<p class="text-lg font-semibold">{formatMetric(data.activity.latestDayContributions)}</p>
+							<p class="mt-0.5 text-xs text-[#6b7280] dark:text-[#9aa4b2]">昨日</p>
 						</div>
 						<div>
 							<p class="text-lg font-semibold">{formatMetric(data.activity.recentContributions)}</p>

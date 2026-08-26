@@ -8,7 +8,7 @@ import {
 	getContributionCount,
 } from '$lib/activity'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
-import { formatGeneratedAt, formatMetric } from '$lib/format'
+import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
 import { SITE_ORIGIN } from '$lib/site'
 import {
 	getSavedThemeMode,
@@ -60,7 +60,6 @@ function setThemeMode(mode: ThemeMode) {
 	resolvedTheme = resolveThemeMode(mode)
 	saveThemeMode(mode)
 }
-
 </script>
 
 <svelte:head>
@@ -88,7 +87,7 @@ function setThemeMode(mode: ThemeMode) {
 				<div class="min-w-0">
 					<h1 class="text-base font-semibold">近期活跃</h1>
 					<p class="mt-0.5 truncate text-xs text-[#6b7280] dark:text-[#9aa4b2]">
-						按 {selectedPeriodOption.label} 排序 · {formatGeneratedAt(data.githubActivity.generatedAt)}
+						按 {selectedPeriodOption.label} 排序 · 截至 {formatPostDate(data.githubActivity.range.to)} · {formatGeneratedAt(data.githubActivity.generatedAt)}
 					</p>
 				</div>
 				<div
