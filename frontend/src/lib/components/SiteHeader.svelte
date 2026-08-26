@@ -17,9 +17,9 @@ type Props = {
 }
 
 const themeLabels: Record<ThemeMode, string> = {
-	auto: 'Auto',
-	dark: 'Night',
-	light: 'Light',
+	auto: '跟随系统',
+	dark: '暗色',
+	light: '亮色',
 }
 const THEME_TOOLTIP_HIDE_DELAY = 650
 
@@ -36,9 +36,17 @@ let {
 }: Props = $props()
 
 let showThemeTooltip = $state(false)
+let themeTooltipMode = $state<ThemeMode>('auto')
 let themeTooltipTimer: ReturnType<typeof setTimeout> | null = null
 let nextThemeMode = $derived(getNextThemeMode(themeMode))
-let themeToggleLabel = $derived(themeLabels[nextThemeMode])
+let themeTooltipLabel = $derived(themeLabels[themeTooltipMode])
+let themeTooltipTheme = $derived(
+	themeTooltipMode === 'auto' ? resolvedTheme : themeTooltipMode,
+)
+let themeTooltipClass = $derived(getThemeTooltipClass(themeTooltipTheme))
+let themeButtonLabel = $derived(
+	`当前主题：${themeLabels[themeMode]}，点击切换到 ${themeLabels[nextThemeMode]}`,
+)
 
 $effect(() => {
 	syncBrowserThemeColor(resolvedTheme)
@@ -47,8 +55,11 @@ $effect(() => {
 onDestroy(clearThemeTooltipTimer)
 
 function toggleThemeMode() {
-	showThemeTooltip = true
-	onThemeModeChange(nextThemeMode)
+	const mode = nextThemeMode
+
+	themeTooltipMode = mode
+	onThemeModeChange(mode)
+	showThemeTooltipNow()
 	hideThemeTooltipSoon()
 }
 
@@ -56,6 +67,12 @@ function getNextThemeMode(mode: ThemeMode): ThemeMode {
 	if (mode === 'light') return 'dark'
 	if (mode === 'dark') return 'auto'
 	return 'light'
+}
+
+function getThemeTooltipClass(theme: ResolvedTheme): string {
+	return theme === 'dark'
+		? 'bg-[#24292f] text-white'
+		: 'bg-[#fdfdfd] text-[#202124] ring-1 ring-[#d8dee4]'
 }
 
 function clearThemeTooltipTimer() {
@@ -127,11 +144,8 @@ function hideThemeTooltipSoon() {
 					type="button"
 					onclick={toggleThemeMode}
 					onblur={hideThemeTooltipNow}
-					onfocus={showThemeTooltipNow}
-					onmouseenter={showThemeTooltipNow}
-					onmouseleave={hideThemeTooltipNow}
 					class="flex h-9 w-9 items-center justify-center rounded-full text-[#4b5563] hover:bg-[#eef2f7] dark:text-[#b6beca] dark:hover:bg-[#202631]"
-					aria-label={`切换到 ${themeToggleLabel}`}
+					aria-label={themeButtonLabel}
 				>
 					{#if resolvedTheme === 'dark'}
 						<svg class="h-4 w-4" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -145,9 +159,11 @@ function hideThemeTooltipSoon() {
 					{/if}
 				</button>
 
-				<span class="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-lg bg-[#24292f] px-2 py-1 text-xs font-medium text-white shadow-lg transition-opacity {showThemeTooltip ? 'opacity-100' : 'opacity-0'} dark:bg-[#e8eaed] dark:text-[#111418]">
-					{themeToggleLabel}
-				</span>
+				{#if showThemeTooltip}
+					<span class="pointer-events-none absolute right-0 top-10 z-50 whitespace-nowrap rounded-lg px-2 py-1 text-xs font-medium shadow-lg {themeTooltipClass}" role="status" aria-live="polite">
+						{themeTooltipLabel}
+					</span>
+				{/if}
 			</div>
 		</div>
 	</div>
