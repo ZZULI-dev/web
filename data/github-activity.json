@@ -1,8 +1,8 @@
 {
 	"generatedAt": "2026-08-25T20:58:37.986Z",
 	"range": {
-		"from": "2025-08-19",
-		"to": "2026-08-24",
+		"from": "2025-08-20",
+		"to": "2026-08-25",
 		"recentDays": 7
 	},
 	"members": [
@@ -16,6 +16,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -796,6 +797,7 @@
 					0,
 					0,
 					2,
+					0,
 					0
 				]
 			},
@@ -1218,6 +1220,7 @@
 					1,
 					18,
 					6,
+					0,
 					0,
 					0,
 					0,
@@ -1667,6 +1670,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -1731,8 +1735,8 @@
 			"name": "ShiYi",
 			"url": "https://github.com/ShiYioo",
 			"avatar": "https://avatars.githubusercontent.com/u/141152739?u=6e54f1be5b03e7b13cb1a18eb757b25eb2ab52e0&v=4",
-			"recentContributions": 10,
-			"totalContributions": 393,
+			"recentContributions": 17,
+			"totalContributions": 401,
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
@@ -2101,7 +2105,8 @@
 					1,
 					0,
 					2,
-					1
+					1,
+					8
 				]
 			},
 			"recentRepositories": [
@@ -2158,7 +2163,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 1
+			"latestDayContributions": 8
 		},
 		{
 			"github": "SkySummer",
@@ -2535,6 +2540,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -2591,8 +2597,8 @@
 			"name": "探姬",
 			"url": "https://github.com/ProbiusOfficial",
 			"avatar": "https://avatars.githubusercontent.com/u/41804496?u=5b7779f83f12fed3959226be267625cf0952f1aa&v=4",
-			"recentContributions": 162,
-			"totalContributions": 7799,
+			"recentContributions": 159,
+			"totalContributions": 7819,
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
@@ -2961,7 +2967,8 @@
 					23,
 					23,
 					23,
-					23
+					23,
+					20
 				]
 			},
 			"recentRepositories": [
@@ -3018,7 +3025,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 23
+			"latestDayContributions": 20
 		},
 		{
 			"github": "caikiji",
@@ -3395,7 +3402,8 @@
 					0,
 					0,
 					0,
-					1
+					1,
+					0
 				]
 			},
 			"recentRepositories": [
@@ -3441,7 +3449,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 1
+			"latestDayContributions": 0
 		},
 		{
 			"github": "FrexCheat",
@@ -3775,6 +3783,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -4241,6 +4250,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -4364,6 +4374,7 @@
 					1,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -5056,6 +5067,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -5120,7 +5132,7 @@
 			"name": "vow",
 			"url": "https://github.com/vow0328",
 			"avatar": "https://avatars.githubusercontent.com/u/150256185?u=0abc9b3a834ae0382b59ec496c9d2745111899e2&v=4",
-			"recentContributions": 2,
+			"recentContributions": 1,
 			"totalContributions": 74,
 			"calendar": {
 				"start": "2025-08-24",
@@ -5490,7 +5502,8 @@
 					0,
 					0,
 					0,
-					1
+					1,
+					0
 				]
 			},
 			"recentRepositories": [
@@ -5525,7 +5538,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 1
+			"latestDayContributions": 0
 		},
 		{
 			"github": "fookwood",
@@ -5843,6 +5856,7 @@
 					0,
 					0,
 					3,
+					0,
 					0,
 					0,
 					0,
@@ -6333,6 +6347,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -6356,8 +6371,8 @@
 			"name": "Dogxi",
 			"url": "https://github.com/dogxii",
 			"avatar": "https://avatars.githubusercontent.com/u/106546046?u=5475e1257bd9419cb6f1e8d020a49940ed39f8be&v=4",
-			"recentContributions": 2,
-			"totalContributions": 1817,
+			"recentContributions": 14,
+			"totalContributions": 1829,
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
@@ -6726,7 +6741,8 @@
 					0,
 					0,
 					0,
-					2
+					2,
+					12
 				]
 			},
 			"recentRepositories": [
@@ -6783,7 +6799,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 2
+			"latestDayContributions": 12
 		},
 		{
 			"github": "HanZephyr",
@@ -7160,7 +7176,8 @@
 					1,
 					0,
 					0,
-					3
+					3,
+					0
 				]
 			},
 			"recentRepositories": [
@@ -7206,7 +7223,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 3
+			"latestDayContributions": 0
 		},
 		{
 			"github": "Chivas-Regal",
@@ -7218,6 +7235,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -8017,6 +8035,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -8375,6 +8394,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -8874,6 +8894,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -8943,6 +8964,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -9736,6 +9758,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -10140,6 +10163,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -10492,6 +10516,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -10997,6 +11022,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -11036,8 +11062,8 @@
 			"name": "Benign X",
 			"url": "https://github.com/W-Mai",
 			"avatar": "https://avatars.githubusercontent.com/u/24841247?u=1b0f86ed28d4873b74f48e9f1e3978345ed68569&v=4",
-			"recentContributions": 47,
-			"totalContributions": 6481,
+			"recentContributions": 48,
+			"totalContributions": 6492,
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
@@ -11406,7 +11432,8 @@
 					13,
 					4,
 					8,
-					1
+					1,
+					11
 				]
 			},
 			"recentRepositories": [
@@ -11463,7 +11490,7 @@
 					"language": null
 				}
 			],
-			"latestDayContributions": 1
+			"latestDayContributions": 11
 		},
 		{
 			"github": "z1zhang",
@@ -11840,6 +11867,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -11907,8 +11935,8 @@
 			"name": "TianLun Song",
 			"url": "https://github.com/songtianlun",
 			"avatar": "https://avatars.githubusercontent.com/u/31945314?u=c61aa712e2d45e56ff532f023479096a61a3e8a9&v=4",
-			"recentContributions": 17,
-			"totalContributions": 2696,
+			"recentContributions": 35,
+			"totalContributions": 2715,
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
@@ -12277,7 +12305,8 @@
 					4,
 					2,
 					1,
-					6
+					6,
+					19
 				]
 			},
 			"recentRepositories": [
@@ -12331,7 +12360,7 @@
 					"language": null
 				}
 			],
-			"latestDayContributions": 6
+			"latestDayContributions": 19
 		},
 		{
 			"github": "ysehertz",
@@ -12651,6 +12680,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -13134,6 +13164,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -13511,6 +13542,7 @@
 					0,
 					0,
 					8,
+					0,
 					0,
 					0,
 					0,
@@ -13974,6 +14006,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -14065,6 +14098,7 @@
 					0,
 					1,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -14789,6 +14823,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -14861,6 +14896,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -15632,6 +15668,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -16069,6 +16106,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -16135,6 +16173,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -16923,6 +16962,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -17351,6 +17391,7 @@
 					0,
 					0,
 					2,
+					0,
 					0
 				]
 			},
@@ -17517,6 +17558,7 @@
 					0,
 					0,
 					2,
+					0,
 					0,
 					0,
 					0,
@@ -18210,6 +18252,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -18624,6 +18667,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -18684,6 +18728,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -19453,6 +19498,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -19469,6 +19515,7 @@
 			"calendar": {
 				"start": "2025-08-24",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -20265,6 +20312,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -20646,6 +20694,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -21100,7 +21149,8 @@
 					0,
 					0,
 					0,
-					2
+					2,
+					0
 				]
 			},
 			"recentRepositories": [
@@ -21135,7 +21185,7 @@
 					}
 				}
 			],
-			"latestDayContributions": 2
+			"latestDayContributions": 0
 		},
 		{
 			"github": "moqix26",
@@ -21500,6 +21550,7 @@
 					2,
 					3,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -21946,6 +21997,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -22374,6 +22426,7 @@
 					1,
 					0,
 					3,
+					0,
 					0,
 					0,
 					0,

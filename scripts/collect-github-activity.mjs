@@ -17,6 +17,7 @@ const RECENT_DAYS = positiveInteger(
 	7,
 )
 const BATCH_SIZE = positiveInteger(process.env.GITHUB_ACTIVITY_BATCH_SIZE, 8)
+const ACTIVITY_TIME_ZONE = 'Asia/Shanghai'
 
 function positiveInteger(value, fallback) {
 	const parsed = Number(value)
@@ -39,14 +40,28 @@ function escapeGraphQLString(value) {
 	return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }
 
-function toDateKey(date) {
-	return date.toISOString().slice(0, 10)
+function toDateKeyInTimeZone(date, timeZone) {
+	const parts = new Intl.DateTimeFormat('en', {
+		day: '2-digit',
+		month: '2-digit',
+		timeZone,
+		year: 'numeric',
+	}).formatToParts(date)
+	const values = Object.fromEntries(
+		parts.map((part) => [part.type, part.value]),
+	)
+
+	return `${values.year}-${values.month}-${values.day}`
 }
 
-function addUtcDays(date, days) {
-	const next = new Date(date)
+function addDateKeyDays(dateKey, days) {
+	const next = new Date(`${dateKey}T00:00:00Z`)
 	next.setUTCDate(next.getUTCDate() + days)
-	return next
+	return next.toISOString().slice(0, 10)
+}
+
+function dateKeyToChinaDayStartIso(dateKey) {
+	return new Date(`${dateKey}T00:00:00+08:00`).toISOString()
 }
 
 function chunk(values, size) {
@@ -212,17 +227,17 @@ async function collect() {
 
 	const alumni = await readAlumni()
 	const now = new Date()
-	const latestDate = addUtcDays(now, -1)
-	const from = addUtcDays(latestDate, -370)
-	const recentFrom = addUtcDays(latestDate, -(RECENT_DAYS - 1))
-	const latestDateKey = toDateKey(latestDate)
-	const recentFromKey = toDateKey(recentFrom)
+	const todayKey = toDateKeyInTimeZone(now, ACTIVITY_TIME_ZONE)
+	const latestDateKey = addDateKeyDays(todayKey, -1)
+	const fromKey = addDateKeyDays(latestDateKey, -370)
+	const recentFromKey = addDateKeyDays(latestDateKey, -(RECENT_DAYS - 1))
+	const toKey = addDateKeyDays(latestDateKey, 1)
 	const members = []
 
 	for (const batch of chunk(alumni, BATCH_SIZE)) {
 		const data = await githubGraphql(buildBatchQuery(batch), {
-			from: from.toISOString(),
-			to: now.toISOString(),
+			from: dateKeyToChinaDayStartIso(fromKey),
+			to: dateKeyToChinaDayStartIso(toKey),
 		})
 
 		for (const [index, person] of batch.entries()) {
@@ -247,7 +262,7 @@ async function collect() {
 	const output = {
 		generatedAt: now.toISOString(),
 		range: {
-			from: toDateKey(from),
+			from: fromKey,
 			to: latestDateKey,
 			recentDays: RECENT_DAYS,
 		},
