@@ -20,7 +20,7 @@ https://zzuli.dev
 
 ## 项目列表
 
-> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。
+> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。（欢迎 Issue 提交）
 
 - [SecToolKit - 网络安全工具索引](https://github.com/ProbiusOfficial/SecToolKit): 收录 CTF 和网络安全常用工具及文档的开源知识库。 (@ProbiusOfficial · Other)
 
