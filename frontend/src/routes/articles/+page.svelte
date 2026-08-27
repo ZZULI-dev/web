@@ -1,8 +1,9 @@
 <script lang="ts">
 import { onMount } from 'svelte'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatPostDate } from '$lib/format'
-import { SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd } from '$lib/seo'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -13,6 +14,9 @@ import {
 } from '$lib/theme'
 import type { PageData } from './$types'
 
+const ARTICLES_TITLE = '文章列表 | ZZULI.dev'
+const ARTICLES_STRUCTURED_POST_LIMIT = 30
+
 let { data }: { data: PageData } = $props()
 let themeMode = $state<ThemeMode>('auto')
 let resolvedTheme = $state<ResolvedTheme>('light')
@@ -21,6 +25,39 @@ let groupBy = $state<'time' | 'author'>('time')
 let showCount = $state(50)
 let loadMoreTrigger = $state<HTMLDivElement | null>(null)
 let expandedAuthors = $state(new Set<string>())
+let articlesDescription = $derived(
+	`浏览 ${data.blogPostCount} 篇 ZZULI 开发者文章，按时间或作者查看${data.blogCrawlWindowLabel}的博客更新。`,
+)
+let articlesJsonLd = $derived(
+	compactJsonLd({
+		'@type': 'CollectionPage',
+		name: ARTICLES_TITLE,
+		description: articlesDescription,
+		url: absoluteUrl('/articles'),
+		mainEntity: compactJsonLd({
+			'@type': 'ItemList',
+			itemListElement: data.blogPosts
+				.slice(0, ARTICLES_STRUCTURED_POST_LIMIT)
+				.map((post, index) =>
+					compactJsonLd({
+						'@type': 'ListItem',
+						position: index + 1,
+						url: post.url,
+						item: compactJsonLd({
+							'@type': 'CreativeWork',
+							name: post.title,
+							url: post.url,
+							author: compactJsonLd({
+								'@type': 'Person',
+								name: post.sourceName,
+							}),
+							datePublished: post.publishedAt,
+						}),
+					}),
+				),
+		}),
+	}),
+)
 
 // Use a stable Map to avoid re-computation issues
 const alumniByName = $derived.by(() => {
@@ -166,10 +203,12 @@ function toggleAuthor(author: string) {
 const INITIAL_AUTHOR_POSTS = 5
 </script>
 
-<svelte:head>
-	<title>文章列表 | ZZULI.dev</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}/articles`} />
-</svelte:head>
+<Seo
+	description={articlesDescription}
+	jsonLd={articlesJsonLd}
+	path="/articles"
+	title={ARTICLES_TITLE}
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}

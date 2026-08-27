@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onDestroy, onMount } from 'svelte'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
 import {
@@ -7,7 +8,7 @@ import {
   type ProfileCardEntry,
   type ProfileCardMetric,
 } from '$lib/profile-card'
-import { SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd } from '$lib/seo'
 import {
   getSavedThemeMode,
   type ResolvedTheme,
@@ -27,7 +28,34 @@ let isExportingProfileImage = $state(false)
 let profileActionMessage = $state('')
 let profileActionTimer: ReturnType<typeof setTimeout> | null = null
 
-let profileUrl = $derived(`${SITE_ORIGIN}${data.person.profilePath}`)
+let profileUrl = $derived(absoluteUrl(data.person.profilePath))
+let profileTitle = $derived(`${data.person.nickname} | ZZULI.dev`)
+let profileDescription = $derived(
+  `${data.person.nickname}（@${data.person.github.username}）在 ZZULI.dev 的个人主页，收录 GitHub 贡献、${data.projects.length} 个项目和 ${data.posts.length} 篇近期文章。`,
+)
+let profileSameAs = $derived(
+  [data.person.github.url, data.person.blog?.url].filter(
+    (value): value is string => Boolean(value),
+  ),
+)
+let profileJsonLd = $derived(
+  compactJsonLd({
+    '@type': 'ProfilePage',
+    name: profileTitle,
+    description: profileDescription,
+    url: profileUrl,
+    dateModified:
+      data.activity?.generatedAt ?? data.blogPostsGeneratedAt ?? undefined,
+    mainEntity: compactJsonLd({
+      '@type': 'Person',
+      name: data.person.nickname,
+      alternateName: data.person.github.username,
+      url: profileUrl,
+      image: data.person.avatar,
+      sameAs: profileSameAs,
+    }),
+  }),
+)
 
 onMount(() => {
   themeMode = getSavedThemeMode()
@@ -198,10 +226,14 @@ function contributionTitle(
 }
 </script>
 
-<svelte:head>
-	<title>{data.person.nickname} | ZZULI.dev</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}${data.person.profilePath}`} />
-</svelte:head>
+<Seo
+	description={profileDescription}
+	image={data.person.avatar}
+	jsonLd={profileJsonLd}
+	path={data.person.profilePath}
+	title={profileTitle}
+	type="profile"
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}

@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
-import { SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd } from '$lib/seo'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -12,11 +13,52 @@ import {
 } from '$lib/theme'
 import type { PageData } from './$types'
 
+const PROJECTS_TITLE = '项目列表 | ZZULI.dev'
+const PROJECTS_STRUCTURED_ITEM_LIMIT = 30
+
 let { data }: { data: PageData } = $props()
 
 let themeMode = $state<ThemeMode>('auto')
 let resolvedTheme = $state<ResolvedTheme>('light')
 let searchTerm = $state('')
+let projectsDescription = $derived(
+	`浏览 ${data.projects.length} 个 ZZULI 开发者开源项目，按项目名称、作者和编程语言查找社区作品。`,
+)
+let projectsJsonLd = $derived(
+	compactJsonLd({
+		'@type': 'CollectionPage',
+		name: PROJECTS_TITLE,
+		description: projectsDescription,
+		url: absoluteUrl('/projects'),
+		mainEntity: compactJsonLd({
+			'@type': 'ItemList',
+			itemListElement: data.projects
+				.slice(0, PROJECTS_STRUCTURED_ITEM_LIMIT)
+				.map((project, index) =>
+					compactJsonLd({
+						'@type': 'ListItem',
+						position: index + 1,
+						url: project.url,
+						item: compactJsonLd({
+							'@type': 'SoftwareSourceCode',
+							name: project.name,
+							description: project.description,
+							url: project.url,
+							programmingLanguage: project.languages.map(
+								(language) => language.name,
+							),
+							author: compactJsonLd({
+								'@type': 'Person',
+								name: project.author.name,
+								url: project.author.url,
+							}),
+							datePublished: project.submittedAt,
+						}),
+					}),
+				),
+		}),
+	}),
+)
 
 let normalizedSearch = $derived(searchTerm.trim().toLowerCase())
 let filteredProjects = $derived(
@@ -67,10 +109,12 @@ function formatProjectDate(value: string | null): string {
 }
 </script>
 
-<svelte:head>
-	<title>项目列表 | ZZULI.dev</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}/projects`} />
-</svelte:head>
+<Seo
+	description={projectsDescription}
+	jsonLd={projectsJsonLd}
+	path="/projects"
+	title={PROJECTS_TITLE}
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}

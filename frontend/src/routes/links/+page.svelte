@@ -1,7 +1,8 @@
 <script lang="ts">
 import { onMount } from 'svelte'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
-import { SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd } from '$lib/seo'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -12,10 +13,40 @@ import {
 } from '$lib/theme'
 import type { PageData } from './$types'
 
+const LINKS_TITLE = '友情链接 | ZZULI.dev'
+
 let { data }: { data: PageData } = $props()
 
 let themeMode = $state<ThemeMode>('auto')
 let resolvedTheme = $state<ResolvedTheme>('light')
+let linksDescription = $derived(
+	`浏览 ZZULI.dev 收录的 ${data.friendLinks.length} 个社区友情链接和开发者站点。`,
+)
+let linksJsonLd = $derived(
+	compactJsonLd({
+		'@type': 'CollectionPage',
+		name: LINKS_TITLE,
+		description: linksDescription,
+		url: absoluteUrl('/links'),
+		mainEntity: compactJsonLd({
+			'@type': 'ItemList',
+			itemListElement: data.friendLinks.map((link, index) =>
+				compactJsonLd({
+					'@type': 'ListItem',
+					position: index + 1,
+					url: link.url,
+					item: compactJsonLd({
+						'@type': 'WebSite',
+						name: link.name,
+						url: link.url,
+						description: link.description,
+						image: link.avatar ? absoluteUrl(link.avatar) : undefined,
+					}),
+				}),
+			),
+		}),
+	}),
+)
 
 onMount(() => {
 	themeMode = getSavedThemeMode()
@@ -43,10 +74,12 @@ function formatHost(value: string) {
 }
 </script>
 
-<svelte:head>
-	<title>友情链接 | ZZULI.dev</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}/links`} />
-</svelte:head>
+<Seo
+	description={linksDescription}
+	jsonLd={linksJsonLd}
+	path="/links"
+	title={LINKS_TITLE}
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}

@@ -9,9 +9,11 @@ import {
 	getNextActivityPeriodKey,
 	isActivityPeriodKey,
 } from '$lib/activity'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
-import { REPOSITORY_URL, SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd, siteJsonLd } from '$lib/seo'
+import { REPOSITORY_URL, SITE_DESCRIPTION, SITE_NAME, SITE_TAGLINE } from '$lib/site'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -23,6 +25,7 @@ import {
 import type { PageData } from './$types'
 
 const HOME_POST_LIMIT = 20
+const HOME_STRUCTURED_POST_LIMIT = 10
 const HOME_PROJECT_LIMIT = 5
 const HOME_ACTIVITY_STORAGE_KEY = 'zzuli-home-activity-period'
 const READ_POSTS_STORAGE_KEY = 'zzuli-read-posts'
@@ -36,6 +39,8 @@ const SUBMIT_ALUMNI_URL =
 const SUBMIT_PROJECT_URL =
 	'https://github.com/dogxii/ZZULI.dev/issues/new?template=submit-project.yml'
 const CONTACT_EMAIL = 'hi@dogxi.me'
+const HOME_TITLE = `${SITE_NAME} | ${SITE_TAGLINE}`
+const HOME_DESCRIPTION = SITE_DESCRIPTION
 type SiteStatsIcon = 'views' | 'visitors'
 
 let { data }: { data: PageData } = $props()
@@ -74,6 +79,37 @@ let filteredAlumni = $derived(
 	}),
 )
 let homePosts = $derived(data.blogPosts)
+let homeJsonLd = $derived([
+	...siteJsonLd(),
+	compactJsonLd({
+		'@type': 'CollectionPage',
+		name: HOME_TITLE,
+		description: HOME_DESCRIPTION,
+		url: absoluteUrl('/'),
+		mainEntity: compactJsonLd({
+			'@type': 'ItemList',
+			itemListElement: homePosts
+				.slice(0, HOME_STRUCTURED_POST_LIMIT)
+				.map((post, index) =>
+					compactJsonLd({
+						'@type': 'ListItem',
+						position: index + 1,
+						url: post.url,
+						item: compactJsonLd({
+							'@type': 'CreativeWork',
+							name: post.title,
+							url: post.url,
+							author: compactJsonLd({
+								'@type': 'Person',
+								name: post.sourceName,
+							}),
+							datePublished: post.publishedAt,
+						}),
+					}),
+				),
+		}),
+	}),
+])
 let hasMorePosts = $derived(data.blogPostCount > HOME_POST_LIMIT)
 let featuredProjects = $derived(
 	projectSample.length > 0
@@ -299,10 +335,12 @@ function sourceStatusLabel(status: string): string {
 }
 </script>
 
-<svelte:head>
-	<title>ZZULI.dev | 开发者社区</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}/`} />
-</svelte:head>
+<Seo
+	description={HOME_DESCRIPTION}
+	jsonLd={homeJsonLd}
+	path="/"
+	title={HOME_TITLE}
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}

@@ -7,9 +7,10 @@ import {
 	getActivityPeriod,
 	getContributionCount,
 } from '$lib/activity'
+import Seo from '$lib/components/Seo.svelte'
 import SiteHeader from '$lib/components/SiteHeader.svelte'
 import { formatGeneratedAt, formatMetric, formatPostDate } from '$lib/format'
-import { SITE_ORIGIN } from '$lib/site'
+import { absoluteUrl, compactJsonLd } from '$lib/seo'
 import {
 	getSavedThemeMode,
 	type ResolvedTheme,
@@ -20,11 +21,17 @@ import {
 } from '$lib/theme'
 import type { PageData } from './$types'
 
+const ACTIVITY_TITLE = '近期活跃 | ZZULI.dev'
+const ACTIVITY_STRUCTURED_MEMBER_LIMIT = 50
+
 let { data }: { data: PageData } = $props()
 
 let themeMode = $state<ThemeMode>('auto')
 let resolvedTheme = $state<ResolvedTheme>('light')
 let selectedPeriod = $state<ActivityPeriodKey>('7d')
+let activityDescription = $derived(
+	`查看 ZZULI 开发者 GitHub 近期活跃榜，按贡献数浏览 ${data.githubActivity.members.length} 位成员的开源动态。`,
+)
 
 let alumniByGitHub = $derived(
 	new Map(data.alumni.map((person) => [person.id, person])),
@@ -44,6 +51,37 @@ let activeMembers = $derived.by(() =>
 			return b.member.totalContributions - a.member.totalContributions
 		}),
 )
+let activityJsonLd = $derived(
+	compactJsonLd({
+		'@type': 'CollectionPage',
+		name: ACTIVITY_TITLE,
+		description: activityDescription,
+		url: absoluteUrl('/activity'),
+		dateModified: data.githubActivity.generatedAt,
+		mainEntity: compactJsonLd({
+			'@type': 'ItemList',
+			itemListElement: activeMembers
+				.slice(0, ACTIVITY_STRUCTURED_MEMBER_LIMIT)
+				.map((item, index) => {
+					const activityView = getActivityMemberView(item.member, alumniByGitHub)
+
+					return compactJsonLd({
+						'@type': 'ListItem',
+						position: index + 1,
+						url: absoluteUrl(activityView.href),
+						item: compactJsonLd({
+							'@type': 'Person',
+							name: activityView.displayName,
+							alternateName: item.member.github,
+							url: absoluteUrl(activityView.href),
+							image: activityView.avatar,
+							sameAs: [item.member.url],
+						}),
+					})
+				}),
+		}),
+	}),
+)
 onMount(() => {
 	themeMode = getSavedThemeMode()
 	resolvedTheme = resolveThemeMode(themeMode)
@@ -62,10 +100,12 @@ function setThemeMode(mode: ThemeMode) {
 }
 </script>
 
-<svelte:head>
-	<title>近期活跃 | ZZULI.dev</title>
-	<link rel="canonical" href={`${SITE_ORIGIN}/activity`} />
-</svelte:head>
+<Seo
+	description={activityDescription}
+	jsonLd={activityJsonLd}
+	path="/activity"
+	title={ACTIVITY_TITLE}
+/>
 
 <div
 	class:dark={resolvedTheme === 'dark'}
