@@ -20,7 +20,7 @@ https://zzuli.dev
 
 ## 项目列表
 
-> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。（欢迎 Issue 提交）
+> 收录 ZZULI 开发者参与的开源项目、教程、工具和社区作品。
 
 - [SecToolKit - 网络安全工具索引](https://github.com/ProbiusOfficial/SecToolKit): 收录 CTF 和网络安全常用工具及文档的开源知识库。 (@ProbiusOfficial · Other)
 
@@ -62,7 +62,7 @@ https://zzuli.dev
 | Charles          | [Charles-IX](https://github.com/Charles-IX)             |                                                |
 | RaXianch         | [DeSireFire](https://github.com/DeSireFire)             |                                                |
 | Sleepwf          | [Games55k](https://github.com/Games55k)                 | [Hi, this is Sleepwf](https://blog.sleepwf.dev/)|
-| vow              | [vow0328](https://github.com/vow0328)                   | [微光拾级](https://vow0328.github.io/)          |
+| vow              | [vow0328](https://github.com/vow0328)                   | [微光拾级](https://vow0328.github.io/)         |
 | Dang Wenliang    | [fookwood](https://github.com/fookwood)                 | [闷瓜蛋子](https://fookwood.com/)              |
 | GlassSky01       | [GlassSky01](https://github.com/GlassSky01)             |                                                |
 | Dogxi            | [dogxii](https://github.com/dogxii)                     | [狗窝子](https://blog.dogxi.me/)               |
@@ -104,6 +104,7 @@ https://zzuli.dev
 | LingLuoMuYun     | [LingLuoMuYun](https://github.com/LingLuoMuYun)         | [泠落の小屋](https://muyunliqiu.vercel.app/)   |
 | ljcjclljc        | [ljcjclljc](https://github.com/ljcjclljc)               | [晨's Blog](https://waiting.org.cn/)           |
 | 文良             | [Gwen317](https://github.com/Gwen317)                   |                                                |
+| 张晨曦           | [zcx-666666-zcx](https://github.com/zcx-666666-zcx)     |                                                |
 
 ---
 
