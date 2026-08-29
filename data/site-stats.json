@@ -1,24 +1,25 @@
 {
-	"generatedAt": "2026-08-28T03:51:23.143Z",
+	"generatedAt": "2026-08-29T02:26:17.763Z",
 	"range": {
-		"from": "2026-07-30",
-		"to": "2026-08-28",
+		"from": "2026-07-31",
+		"to": "2026-08-29",
 		"days": 30
 	},
 	"hostname": "zzuli.dev",
-	"requests": 11124,
-	"pageViews": 6022,
+	"requests": 13751,
+	"pageViews": 6675,
 	"visits": null,
-	"uniqueVisitors": 619,
+	"uniqueVisitors": 892,
 	"uniqueVisitorsApproximate": true,
-	"totalPageViews": 6022,
+	"totalPageViews": 6675,
 	"totalPageViewsStartedAt": "2026-08-25",
-	"totalPageViewsUpdatedThrough": "2026-08-28",
+	"totalPageViewsUpdatedThrough": "2026-08-29",
 	"dailyPageViews": {
 		"2026-08-25": 317,
 		"2026-08-26": 5063,
-		"2026-08-28": 31,
-		"2026-08-27": 611
+		"2026-08-28": 616,
+		"2026-08-27": 611,
+		"2026-08-29": 68
 	},
 	"source": "cloudflare-graphql:httpRequests1dGroups",
 	"available": true
