@@ -75,6 +75,8 @@ const ARTICLE_HINTS = [
 	/\/p\/\d+\.html$/i,
 	/\/article\/details\/\d+/i,
 ]
+const ARTICLE_HASH_HINT =
+	/^#(?:!?\/)?(?:article|articles|post|posts|entry|entries|blog|p)(?:[/?#-]|$)/i
 
 const FEED_DATE_TAGS = [
 	'pubDate',
@@ -144,15 +146,21 @@ async function readPreviousOutput() {
 	}
 }
 
-function normalizeUrl(value, baseUrl) {
+function normalizeUrl(value, baseUrl, options = {}) {
 	const url = new URL(value, baseUrl)
-	url.hash = ''
+	if (!options.preserveArticleHash || !isArticleHash(url.hash)) {
+		url.hash = ''
+	}
 
 	if (url.pathname !== '/') {
 		url.pathname = url.pathname.replace(/\/+$/, '')
 	}
 
 	return url.toString()
+}
+
+function isArticleHash(hash) {
+	return ARTICLE_HASH_HINT.test(hash)
 }
 
 function withTrailingSlash(value) {
@@ -881,7 +889,7 @@ function makePost({
 	let normalizedUrl
 
 	try {
-		normalizedUrl = normalizeUrl(url, baseUrl)
+		normalizedUrl = normalizeUrl(url, baseUrl, { preserveArticleHash: true })
 	} catch {
 		return null
 	}
@@ -1336,10 +1344,11 @@ function sortPosts(posts) {
 }
 
 function isRecentPost(post) {
-	if (!MIN_POST_TIME || !post.publishedAt) return true
+	if (!post.publishedAt) return false
+	if (!MIN_POST_TIME) return true
 
 	const time = new Date(post.publishedAt).getTime()
-	if (Number.isNaN(time)) return true
+	if (Number.isNaN(time)) return false
 
 	return time >= MIN_POST_TIME
 }

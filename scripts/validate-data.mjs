@@ -7,6 +7,8 @@ const ROOT_DIR = path.resolve(
 	'..',
 )
 const errors = []
+const ARTICLE_HASH_HINT =
+	/^#(?:!?\/)?(?:article|articles|post|posts|entry|entries|blog|p)(?:[/?#-]|$)/i
 
 function readJson(relativePath) {
 	const absolutePath = path.join(ROOT_DIR, relativePath)
@@ -41,10 +43,12 @@ function isHttpUrl(value) {
 	}
 }
 
-function normalizeUrlKey(value) {
+function normalizeUrlKey(value, options = {}) {
 	try {
 		const url = new URL(value)
-		url.hash = ''
+		if (!options.preserveArticleHash || !ARTICLE_HASH_HINT.test(url.hash)) {
+			url.hash = ''
+		}
 		url.pathname = url.pathname.replace(/\/+$/, '') || '/'
 		return url.toString().toLowerCase()
 	} catch {
@@ -265,7 +269,12 @@ function validateBlogPosts() {
 		if (!isNonEmptyString(post.url) || !isHttpUrl(post.url)) {
 			addError(pathLabel, `url 必须是 http(s) URL: ${post.url ?? ''}`)
 		}
-		checkUnique('url', normalizeUrlKey(post.url), urls, pathLabel)
+		checkUnique(
+			'url',
+			normalizeUrlKey(post.url, { preserveArticleHash: true }),
+			urls,
+			pathLabel,
+		)
 		if (!isNonEmptyString(post.sourceName)) {
 			addError(pathLabel, 'sourceName 不能为空')
 		}
