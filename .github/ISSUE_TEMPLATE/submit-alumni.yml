@@ -29,8 +29,8 @@ body:
   - type: input
     id: blog_url
     attributes:
-      label: 博客/主页（可选）
-      description: 留空则不展示
+      label: 博客（可选）
+      description: 留空则不展示，自动获取博客文章
       placeholder: 例如：https://blog.dogxi.me/
 
   - type: input
