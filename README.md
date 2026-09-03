@@ -1,10 +1,10 @@
+<img width="1983" height="793" alt="Group 1 (2)" src="https://github.com/user-attachments/assets/884908af-84cf-450b-8df8-f94a6824827d" />
+
 ## ZZULI.dev
 
-收集所有 ZZULI 开发者校友信息，GitHub、项目、博客等，看看大家都在干什么。
+这是一个收集所有 ZZULI 开发者校友信息，GitHub、项目、博客等的项目，看看大家都在干什么。
 
-2.0 版本已经震撼发布 🎉
-
-![banner](./banner/banner.webp)
+2.0 新版本已经发布 🎉
 
 ## 快速开始
 
