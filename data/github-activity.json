@@ -1,8 +1,8 @@
 {
-	"generatedAt": "2026-09-02T21:53:39.614Z",
+	"generatedAt": "2026-09-03T21:46:16.111Z",
 	"range": {
-		"from": "2025-08-28",
-		"to": "2026-09-02",
+		"from": "2025-08-29",
+		"to": "2026-09-03",
 		"recentDays": 7
 	},
 	"members": [
@@ -17,6 +17,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -801,6 +802,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -1216,6 +1218,7 @@
 					1,
 					18,
 					6,
+					0,
 					0,
 					0,
 					0,
@@ -1676,6 +1679,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -1739,9 +1743,9 @@
 			"name": "ShiYi",
 			"url": "https://github.com/ShiYioo",
 			"avatar": "https://avatars.githubusercontent.com/u/141152739?u=6e54f1be5b03e7b13cb1a18eb757b25eb2ab52e0&v=4",
-			"latestDayContributions": 1,
-			"recentContributions": 206,
-			"totalContributions": 614,
+			"latestDayContributions": 10,
+			"recentContributions": 187,
+			"totalContributions": 624,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -2112,28 +2116,29 @@
 					83,
 					1,
 					0,
-					1
+					1,
+					10
 				]
 			},
 			"recentRepositories": [
 				{
-					"name": "apifox-mcp-safe-skill",
-					"nameWithOwner": "ShiYioo/apifox-mcp-safe-skill",
-					"url": "https://github.com/ShiYioo/apifox-mcp-safe-skill",
-					"pushedAt": "2026-09-02T09:27:38Z",
-					"stars": 0,
-					"language": null
-				},
-				{
 					"name": "Thymeleaf-Reactive",
 					"nameWithOwner": "ShiYioo/Thymeleaf-Reactive",
 					"url": "https://github.com/ShiYioo/Thymeleaf-Reactive",
-					"pushedAt": "2026-08-30T16:27:18Z",
+					"pushedAt": "2026-09-03T09:15:25Z",
 					"stars": 0,
 					"language": {
 						"name": "TypeScript",
 						"color": "#3178c6"
 					}
+				},
+				{
+					"name": "apifox-mcp-safe-skill",
+					"nameWithOwner": "ShiYioo/apifox-mcp-safe-skill",
+					"url": "https://github.com/ShiYioo/apifox-mcp-safe-skill",
+					"pushedAt": "2026-09-03T02:53:42Z",
+					"stars": 0,
+					"language": null
 				},
 				{
 					"name": "shiyiblog",
@@ -2545,6 +2550,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -2600,9 +2606,9 @@
 			"name": "探姬",
 			"url": "https://github.com/ProbiusOfficial",
 			"avatar": "https://avatars.githubusercontent.com/u/41804496?u=5b7779f83f12fed3959226be267625cf0952f1aa&v=4",
-			"latestDayContributions": 17,
-			"recentContributions": 46,
-			"totalContributions": 7708,
+			"latestDayContributions": 5,
+			"recentContributions": 49,
+			"totalContributions": 7714,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -2973,7 +2979,8 @@
 					6,
 					7,
 					6,
-					17
+					18,
+					5
 				]
 			},
 			"recentRepositories": [
@@ -2981,11 +2988,30 @@
 					"name": "Hello-CTFtime",
 					"nameWithOwner": "ProbiusOfficial/Hello-CTFtime",
 					"url": "https://github.com/ProbiusOfficial/Hello-CTFtime",
-					"pushedAt": "2026-09-02T21:33:36Z",
+					"pushedAt": "2026-09-03T19:37:26Z",
 					"stars": 176,
 					"language": {
 						"name": "Python",
 						"color": "#3572A5"
+					}
+				},
+				{
+					"name": "SecToolKit",
+					"nameWithOwner": "ProbiusOfficial/SecToolKit",
+					"url": "https://github.com/ProbiusOfficial/SecToolKit",
+					"pushedAt": "2026-09-03T03:01:45Z",
+					"stars": 972,
+					"language": null
+				},
+				{
+					"name": "Hello-CTF",
+					"nameWithOwner": "ProbiusOfficial/Hello-CTF",
+					"url": "https://github.com/ProbiusOfficial/Hello-CTF",
+					"pushedAt": "2026-09-03T02:42:43Z",
+					"stars": 4176,
+					"language": {
+						"name": "HTML",
+						"color": "#e34c26"
 					}
 				},
 				{
@@ -2997,25 +3023,6 @@
 					"language": {
 						"name": "PHP",
 						"color": "#4F5D95"
-					}
-				},
-				{
-					"name": "SecToolKit",
-					"nameWithOwner": "ProbiusOfficial/SecToolKit",
-					"url": "https://github.com/ProbiusOfficial/SecToolKit",
-					"pushedAt": "2026-09-02T02:59:47Z",
-					"stars": 971,
-					"language": null
-				},
-				{
-					"name": "Hello-CTF",
-					"nameWithOwner": "ProbiusOfficial/Hello-CTF",
-					"url": "https://github.com/ProbiusOfficial/Hello-CTF",
-					"pushedAt": "2026-09-02T02:35:55Z",
-					"stars": 4173,
-					"language": {
-						"name": "HTML",
-						"color": "#e34c26"
 					}
 				},
 				{
@@ -3036,9 +3043,9 @@
 			"name": "Caiki",
 			"url": "https://github.com/caikiji",
 			"avatar": "https://avatars.githubusercontent.com/u/134731247?u=c4c5c562de8b6c305985be05428653c6538931b1&v=4",
-			"latestDayContributions": 0,
-			"recentContributions": 50,
-			"totalContributions": 587,
+			"latestDayContributions": 2,
+			"recentContributions": 31,
+			"totalContributions": 590,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -3407,9 +3414,10 @@
 					16,
 					9,
 					0,
-					3,
+					4,
 					0,
-					0
+					0,
+					2
 				]
 			},
 			"recentRepositories": [
@@ -3417,7 +3425,7 @@
 					"name": "skills-lab",
 					"nameWithOwner": "caikiji/skills-lab",
 					"url": "https://github.com/caikiji/skills-lab",
-					"pushedAt": "2026-08-31T02:59:13Z",
+					"pushedAt": "2026-09-03T12:49:27Z",
 					"stars": 4,
 					"language": {
 						"name": "Python",
@@ -3845,6 +3853,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -4164,6 +4173,7 @@
 					0,
 					0,
 					2,
+					0,
 					0,
 					0,
 					0,
@@ -4706,6 +4716,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -4717,7 +4728,7 @@
 			"url": "https://github.com/Games55k",
 			"avatar": "https://avatars.githubusercontent.com/u/147263461?u=1b4a40f4e8c169b3912698ac578859a8acc2e56b&v=4",
 			"latestDayContributions": 0,
-			"recentContributions": 2,
+			"recentContributions": 1,
 			"totalContributions": 233,
 			"calendar": {
 				"start": "2025-08-31",
@@ -5089,6 +5100,7 @@
 					0,
 					1,
 					0,
+					0,
 					0
 				]
 			},
@@ -5097,7 +5109,7 @@
 					"name": "Games55k",
 					"nameWithOwner": "Games55k/Games55k",
 					"url": "https://github.com/Games55k/Games55k",
-					"pushedAt": "2026-09-02T16:11:21Z",
+					"pushedAt": "2026-09-03T16:00:38Z",
 					"stars": 1,
 					"language": null
 				},
@@ -5525,6 +5537,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -5939,6 +5952,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -5964,7 +5978,7 @@
 					"nameWithOwner": "fookwood/Launcher3",
 					"url": "https://github.com/fookwood/Launcher3",
 					"pushedAt": "2021-05-14T10:32:47Z",
-					"stars": 839,
+					"stars": 838,
 					"language": {
 						"name": "Java",
 						"color": "#b07219"
@@ -6372,6 +6386,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -6394,9 +6409,9 @@
 			"name": "Dogxi",
 			"url": "https://github.com/dogxii",
 			"avatar": "https://avatars.githubusercontent.com/u/106546046?u=5475e1257bd9419cb6f1e8d020a49940ed39f8be&v=4",
-			"latestDayContributions": 2,
-			"recentContributions": 16,
-			"totalContributions": 1846,
+			"latestDayContributions": 7,
+			"recentContributions": 14,
+			"totalContributions": 1802,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -6419,7 +6434,7 @@
 					3,
 					1,
 					3,
-					7,
+					6,
 					19,
 					2,
 					2,
@@ -6442,41 +6457,41 @@
 					3,
 					1,
 					0,
-					13,
-					10,
-					3,
-					22,
-					7,
-					5,
-					6,
-					4,
+					11,
+					9,
 					2,
-					4,
-					1,
-					4,
-					3,
-					2,
-					2,
-					1,
+					21,
 					5,
 					4,
-					7,
+					4,
+					2,
+					1,
+					2,
+					1,
+					2,
+					2,
+					1,
+					1,
+					1,
+					3,
+					2,
+					5,
 					0,
 					7,
 					0,
-					4,
-					4,
-					4,
-					4,
+					2,
+					2,
+					2,
+					3,
 					0,
 					1,
 					1,
 					6,
-					13,
-					7,
+					4,
+					3,
 					3,
 					1,
-					4,
+					2,
 					0,
 					2,
 					2,
@@ -6494,14 +6509,14 @@
 					12,
 					7,
 					8,
-					20,
+					19,
 					10,
 					7,
 					14,
 					1,
 					3,
 					1,
-					7,
+					6,
 					0,
 					0,
 					0,
@@ -6767,26 +6782,16 @@
 					1,
 					2,
 					0,
-					2
+					2,
+					7
 				]
 			},
 			"recentRepositories": [
 				{
-					"name": "ZZULI.dev",
-					"nameWithOwner": "dogxii/ZZULI.dev",
-					"url": "https://github.com/dogxii/ZZULI.dev",
-					"pushedAt": "2026-09-02T21:27:58Z",
-					"stars": 12,
-					"language": {
-						"name": "Svelte",
-						"color": "#ff3e00"
-					}
-				},
-				{
 					"name": "dogxii",
 					"nameWithOwner": "dogxii/dogxii",
 					"url": "https://github.com/dogxii/dogxii",
-					"pushedAt": "2026-09-02T19:20:22Z",
+					"pushedAt": "2026-09-03T19:05:47Z",
 					"stars": 2,
 					"language": null
 				},
@@ -6818,6 +6823,17 @@
 					"url": "https://github.com/dogxii/webark-im-template",
 					"pushedAt": "2026-08-11T04:51:29Z",
 					"stars": 43,
+					"language": {
+						"name": "TypeScript",
+						"color": "#3178c6"
+					}
+				},
+				{
+					"name": "iResume",
+					"nameWithOwner": "dogxii/iResume",
+					"url": "https://github.com/dogxii/iResume",
+					"pushedAt": "2026-08-09T12:48:26Z",
+					"stars": 24,
 					"language": {
 						"name": "TypeScript",
 						"color": "#3178c6"
@@ -7203,6 +7219,7 @@
 					1,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -7261,6 +7278,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -8064,6 +8082,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -8415,6 +8434,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -8925,6 +8945,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -8994,6 +9015,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -9791,6 +9813,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -9825,8 +9848,8 @@
 			"url": "https://github.com/Meteor-Z",
 			"avatar": "https://avatars.githubusercontent.com/u/29045019?u=b3db759a89953ff9fa9ec83be6526d7211596407&v=4",
 			"latestDayContributions": 1,
-			"recentContributions": 1,
-			"totalContributions": 123,
+			"recentContributions": 2,
+			"totalContributions": 124,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -10197,6 +10220,7 @@
 					0,
 					0,
 					0,
+					1,
 					1
 				]
 			},
@@ -10205,7 +10229,7 @@
 					"name": "Meteor-Z.github.io",
 					"nameWithOwner": "Meteor-Z/Meteor-Z.github.io",
 					"url": "https://github.com/Meteor-Z/Meteor-Z.github.io",
-					"pushedAt": "2026-09-02T14:18:04Z",
+					"pushedAt": "2026-09-03T15:17:13Z",
 					"stars": 0,
 					"language": {
 						"name": "HTML",
@@ -10633,6 +10657,7 @@
 					0,
 					0,
 					2,
+					0,
 					0
 				]
 			},
@@ -10641,7 +10666,7 @@
 					"name": "123508",
 					"nameWithOwner": "123508/123508",
 					"url": "https://github.com/123508/123508",
-					"pushedAt": "2026-09-02T04:11:34Z",
+					"pushedAt": "2026-09-03T04:07:38Z",
 					"stars": 0,
 					"language": null
 				},
@@ -10685,7 +10710,7 @@
 			"name": "hoey",
 			"url": "https://github.com/hoey94",
 			"avatar": "https://avatars.githubusercontent.com/u/13510799?u=e82aa9b7e24e33c75cc784eefe40675de780bc73&v=4",
-			"latestDayContributions": 2,
+			"latestDayContributions": 0,
 			"recentContributions": 2,
 			"totalContributions": 24,
 			"calendar": {
@@ -11058,7 +11083,8 @@
 					0,
 					0,
 					0,
-					2
+					2,
+					0
 				]
 			},
 			"recentRepositories": [
@@ -11107,9 +11133,9 @@
 			"name": "Benign X",
 			"url": "https://github.com/W-Mai",
 			"avatar": "https://avatars.githubusercontent.com/u/24841247?u=1b0f86ed28d4873b74f48e9f1e3978345ed68569&v=4",
-			"latestDayContributions": 13,
-			"recentContributions": 208,
-			"totalContributions": 6774,
+			"latestDayContributions": 6,
+			"recentContributions": 186,
+			"totalContributions": 6781,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -11480,7 +11506,8 @@
 					32,
 					38,
 					30,
-					13
+					14,
+					6
 				]
 			},
 			"recentRepositories": [
@@ -11488,11 +11515,22 @@
 					"name": "mirui",
 					"nameWithOwner": "W-Mai/mirui",
 					"url": "https://github.com/W-Mai/mirui",
-					"pushedAt": "2026-09-02T13:01:29Z",
-					"stars": 15,
+					"pushedAt": "2026-09-03T07:42:10Z",
+					"stars": 17,
 					"language": {
 						"name": "Rust",
 						"color": "#dea584"
+					}
+				},
+				{
+					"name": "xskills",
+					"nameWithOwner": "W-Mai/xskills",
+					"url": "https://github.com/W-Mai/xskills",
+					"pushedAt": "2026-09-03T06:19:40Z",
+					"stars": 1,
+					"language": {
+						"name": "Python",
+						"color": "#3572A5"
 					}
 				},
 				{
@@ -11526,17 +11564,6 @@
 					"language": {
 						"name": "Rust",
 						"color": "#dea584"
-					}
-				},
-				{
-					"name": "icui",
-					"nameWithOwner": "W-Mai/icui",
-					"url": "https://github.com/W-Mai/icui",
-					"pushedAt": "2026-08-28T17:56:18Z",
-					"stars": 0,
-					"language": {
-						"name": "JavaScript",
-						"color": "#f1e05a"
 					}
 				}
 			]
@@ -11919,6 +11946,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -11985,9 +12013,9 @@
 			"name": "TianLun Song",
 			"url": "https://github.com/songtianlun",
 			"avatar": "https://avatars.githubusercontent.com/u/31945314?u=c61aa712e2d45e56ff532f023479096a61a3e8a9&v=4",
-			"latestDayContributions": 6,
-			"recentContributions": 41,
-			"totalContributions": 2715,
+			"latestDayContributions": 1,
+			"recentContributions": 38,
+			"totalContributions": 2716,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -12358,7 +12386,8 @@
 					2,
 					10,
 					8,
-					6
+					6,
+					1
 				]
 			},
 			"recentRepositories": [
@@ -12366,7 +12395,7 @@
 					"name": "songtianlun.github.io",
 					"nameWithOwner": "songtianlun/songtianlun.github.io",
 					"url": "https://github.com/songtianlun/songtianlun.github.io",
-					"pushedAt": "2026-09-02T18:07:47Z",
+					"pushedAt": "2026-09-03T18:07:36Z",
 					"stars": 5,
 					"language": null
 				},
@@ -12725,6 +12754,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -13219,6 +13249,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -13589,6 +13620,7 @@
 					0,
 					0,
 					8,
+					0,
 					0,
 					0,
 					0,
@@ -14063,6 +14095,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -14071,7 +14104,7 @@
 					"name": "yin-bo-Final",
 					"nameWithOwner": "yin-bo-Final/yin-bo-Final",
 					"url": "https://github.com/yin-bo-Final/yin-bo-Final",
-					"pushedAt": "2026-09-02T02:38:35Z",
+					"pushedAt": "2026-09-03T02:44:32Z",
 					"stars": 2,
 					"language": null
 				},
@@ -14147,6 +14180,7 @@
 					0,
 					1,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -14882,6 +14916,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -14954,6 +14989,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -15729,6 +15765,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -16168,6 +16205,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -16234,6 +16272,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -17026,6 +17065,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -17456,6 +17496,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -17615,6 +17656,7 @@
 					0,
 					0,
 					2,
+					0,
 					0,
 					0,
 					0,
@@ -18319,6 +18361,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -18735,6 +18778,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -18795,6 +18839,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -19568,6 +19613,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -19584,6 +19630,7 @@
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
+					0,
 					0,
 					0,
 					0,
@@ -20011,9 +20058,9 @@
 			"name": "MengShenXiaoTian",
 			"url": "https://github.com/MsXiaoTian-Gamer",
 			"avatar": "https://avatars.githubusercontent.com/u/285386255?v=4",
-			"latestDayContributions": 0,
-			"recentContributions": 3,
-			"totalContributions": 65,
+			"latestDayContributions": 18,
+			"recentContributions": 21,
+			"totalContributions": 83,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -20384,7 +20431,8 @@
 					1,
 					0,
 					0,
-					0
+					0,
+					18
 				]
 			},
 			"recentRepositories": [
@@ -20392,7 +20440,7 @@
 					"name": "mengshenxiaotian",
 					"nameWithOwner": "MsXiaoTian-Gamer/mengshenxiaotian",
 					"url": "https://github.com/MsXiaoTian-Gamer/mengshenxiaotian",
-					"pushedAt": "2026-09-02T18:34:05Z",
+					"pushedAt": "2026-09-03T11:48:23Z",
 					"stars": 0,
 					"language": {
 						"name": "HTML",
@@ -20758,6 +20806,7 @@
 					0,
 					0,
 					1,
+					0,
 					0,
 					0,
 					0,
@@ -21223,6 +21272,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -21637,6 +21687,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -21645,7 +21696,7 @@
 					"name": "MoQix26",
 					"nameWithOwner": "moqix26/MoQix26",
 					"url": "https://github.com/moqix26/MoQix26",
-					"pushedAt": "2026-09-02T03:24:40Z",
+					"pushedAt": "2026-09-03T03:26:35Z",
 					"stars": 0,
 					"language": null
 				},
@@ -21700,9 +21751,9 @@
 			"name": null,
 			"url": "https://github.com/LingLuoMuYun",
 			"avatar": "https://avatars.githubusercontent.com/u/167536706?u=6b998cc814d7ccce59cfb556153e815f3af957a7&v=4",
-			"latestDayContributions": 0,
-			"recentContributions": 0,
-			"totalContributions": 336,
+			"latestDayContributions": 1,
+			"recentContributions": 1,
+			"totalContributions": 337,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -22073,7 +22124,8 @@
 					0,
 					0,
 					0,
-					0
+					0,
+					1
 				]
 			},
 			"recentRepositories": [
@@ -22081,7 +22133,7 @@
 					"name": "EverlastingDemo",
 					"nameWithOwner": "LingLuoMuYun/EverlastingDemo",
 					"url": "https://github.com/LingLuoMuYun/EverlastingDemo",
-					"pushedAt": "2026-08-16T08:05:51Z",
+					"pushedAt": "2026-09-03T15:14:30Z",
 					"stars": 0,
 					"language": {
 						"name": "TypeScript",
@@ -22136,9 +22188,9 @@
 			"name": null,
 			"url": "https://github.com/ljcjclljc",
 			"avatar": "https://avatars.githubusercontent.com/u/169005916?u=ed6463b363ad20561745c64e37903cd8acdc3777&v=4",
-			"latestDayContributions": 0,
-			"recentContributions": 5,
-			"totalContributions": 59,
+			"latestDayContributions": 1,
+			"recentContributions": 6,
+			"totalContributions": 60,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -22509,7 +22561,8 @@
 					1,
 					2,
 					2,
-					0
+					0,
+					1
 				]
 			},
 			"recentRepositories": [
@@ -22517,7 +22570,7 @@
 					"name": "Waiting",
 					"nameWithOwner": "ljcjclljc/Waiting",
 					"url": "https://github.com/ljcjclljc/Waiting",
-					"pushedAt": "2026-09-01T15:02:24Z",
+					"pushedAt": "2026-09-03T15:24:50Z",
 					"stars": 3,
 					"language": {
 						"name": "C++",
@@ -22562,7 +22615,7 @@
 			"url": "https://github.com/Gwen317",
 			"avatar": "https://avatars.githubusercontent.com/u/180490587?u=a6a5f2ad19c161f9581f2f09d0c6d41b56e740ec&v=4",
 			"latestDayContributions": 0,
-			"recentContributions": 14,
+			"recentContributions": 6,
 			"totalContributions": 611,
 			"calendar": {
 				"start": "2025-08-31",
@@ -22934,6 +22987,7 @@
 					0,
 					0,
 					0,
+					0,
 					0
 				]
 			},
@@ -23000,9 +23054,9 @@
 			"name": null,
 			"url": "https://github.com/zcx-666666-zcx",
 			"avatar": "https://avatars.githubusercontent.com/u/208161518?u=6b294b7862a3ec7450f5e7f437c090c630546351&v=4",
-			"latestDayContributions": 1,
-			"recentContributions": 50,
-			"totalContributions": 312,
+			"latestDayContributions": 8,
+			"recentContributions": 58,
+			"totalContributions": 320,
 			"calendar": {
 				"start": "2025-08-31",
 				"counts": [
@@ -23373,7 +23427,8 @@
 					23,
 					19,
 					0,
-					1
+					1,
+					8
 				]
 			},
 			"recentRepositories": [
