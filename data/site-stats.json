@@ -1,14 +1,14 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-09-24T22:43:35.802Z",
+	"generatedAt": "2026-09-25T22:47:50.259Z",
 	"range": {
-		"from": "2026-08-25",
-		"to": "2026-09-24",
+		"from": "2026-08-26",
+		"to": "2026-09-25",
 		"days": 30
 	},
 	"hostname": "zzuli.dev",
-	"visits": 350,
-	"pageViews": 1150,
+	"visits": 290,
+	"pageViews": 1080,
 	"excludeBots": true,
 	"source": "cloudflare-web-analytics:rumPageloadEventsAdaptiveGroups",
 	"available": true
