@@ -1,9 +1,9 @@
 {
 	"schemaVersion": 2,
-	"generatedAt": "2026-11-20T01:26:41.264Z",
+	"generatedAt": "2026-11-21T00:56:57.975Z",
 	"range": {
-		"from": "2026-10-21",
-		"to": "2026-11-20",
+		"from": "2026-10-22",
+		"to": "2026-11-21",
 		"days": 30
 	},
 	"hostname": "zzuli.dev",
